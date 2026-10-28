@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Legal Design Workshop – Touchscreen Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f1ec; --surface:#ffffff; --ink:#1f1c1b; --muted:#6a645e; --line:#d9d3ca;
+  --brand:#a51c30; --brand-text:#a51c30; --brand-soft:#f5e3e6; --slate:#dfe6ee; --slate-ink:#2d4259;
+  --s0:#fff0a6; --s1:#d8ecf5; --s2:#d9efd0; --s3:#fde0c2; --sticky-ink:#2a2410;
+  --ok:#2f7a45;
+  --serif:"Literata", Georgia, "Times New Roman", serif;
+  --sans:"Atkinson Hyperlegible", "Segoe UI", system-ui, Arial, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151312; --surface:#211e1c; --ink:#f2ede8; --muted:#a79f97; --line:#3b3632;
+    --brand-text:#ff8a98; --brand-soft:#3a1c22; --slate:#26323f; --slate-ink:#cfdcec;
+    --s0:#5c5220; --s1:#1f4a5c; --s2:#2f5427; --s3:#5e4020; --sticky-ink:#f5efe3; --ok:#6fcf8a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151312; --surface:#211e1c; --ink:#f2ede8; --muted:#a79f97; --line:#3b3632;
+  --brand-text:#ff8a98; --brand-soft:#3a1c22; --slate:#26323f; --slate-ink:#cfdcec;
+  --s0:#5c5220; --s1:#1f4a5c; --s2:#2f5427; --s3:#5e4020; --sticky-ink:#f5efe3; --ok:#6fcf8a;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{font-size:clamp(15px,1.08vw,24px);height:100%}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.4;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+.app{display:flex;flex-direction:column;height:100%}
+
+/* header */
+.top{display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;background:var(--brand);color:#fff;flex-wrap:wrap}
+.top h1{font-family:var(--serif);font-size:1.45rem;margin:0;font-weight:700;letter-spacing:.005em}
+.top .sub{font-size:.9rem;opacity:.85}
+.top .spacer{flex:1}
+.seg{display:flex;background:rgba(0,0,0,.22);border-radius:.8rem;padding:.2rem}
+.seg button{border:0;background:transparent;color:#fff;padding:.55rem 1rem;border-radius:.6rem;min-height:2.7rem;font-weight:700;opacity:.8}
+.seg button[aria-pressed="true"]{background:#fff;color:#7d1424;opacity:1}
+.tbtn{border:2px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:.8rem;min-height:2.9rem;padding:0 1rem;font-weight:700}
+.tbtn:active{background:rgba(255,255,255,.2)}
+.timer{display:flex;align-items:center;gap:.5rem;background:rgba(0,0,0,.25);border-radius:1rem;padding:.3rem .5rem .3rem .3rem}
+.timer .face{display:flex;align-items:center;gap:.6rem;border:0;background:transparent;color:#fff;padding:0 .4rem 0 0;min-height:3.2rem}
+.timer svg{width:2.9rem;height:2.9rem;transform:rotate(-90deg)}
+.timer circle{fill:none;stroke-width:5}
+.timer .bg{stroke:rgba(255,255,255,.25)}
+.timer .fg{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.timer .t{font-variant-numeric:tabular-nums;font-size:1.7rem;font-weight:700;min-width:3.6ch}
+.timer .mini{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:.6rem;min-height:2.6rem;min-width:2.6rem;font-weight:700}
+.timer.done{animation:pulse .8s ease-in-out 4}
+@keyframes pulse{50%{background:#fff;color:#000}}
+@media (prefers-reduced-motion:reduce){.timer.done{animation:none;outline:3px solid #fff}}
+
+/* stepper */
+.stepper{display:flex;gap:.5rem;padding:.7rem 1.25rem;background:var(--slate);overflow-x:auto}
+.step{display:flex;align-items:center;gap:.55rem;border:2px solid transparent;background:var(--surface);color:var(--ink);border-radius:2rem;padding:.35rem 1rem .35rem .4rem;min-height:3rem;white-space:nowrap;font-weight:700}
+.step .n{display:grid;place-items:center;width:2.1rem;height:2.1rem;border-radius:50%;background:var(--slate);color:var(--slate-ink);font-size:.95rem}
+.step.done .n{background:var(--ok);color:#fff}
+.step.on{border-color:var(--brand);background:var(--brand-soft)}
+.step.on .n{background:var(--brand);color:#fff}
+
+/* stage layout */
+.stage{flex:1;min-height:0;display:grid;grid-template-columns:minmax(17rem,24%) 1fr;grid-template-rows:minmax(0,1fr);gap:1.25rem;padding:1.25rem}
+.rail{overflow:auto;padding-right:.25rem}
+.work{min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:1rem;padding:.25rem}
+.phase{font-size:1rem;color:var(--brand-text);font-weight:700;margin:0 0 .15rem}
+.rail h2{font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:0 0 .6rem}
+.rail h3{font-family:var(--serif);font-size:1.15rem;margin:1.1rem 0 .4rem}
+.rail p,.rail li{font-size:1.02rem}
+.rail ul,.rail ol{padding-left:1.2rem;margin:.3rem 0}
+.rail li{margin:.3rem 0}
+.timepill{display:inline-block;background:var(--slate);color:var(--slate-ink);border-radius:2rem;padding:.2rem .8rem;font-weight:700;font-size:.95rem;margin-bottom:.8rem}
+.muted{color:var(--muted)}
+.ask{border-left:5px solid var(--brand);padding:.2rem 0 .2rem .9rem;margin:.9rem 0;font-family:var(--serif);font-size:1.15rem}
+
+/* controls */
+.btn{min-height:3.2rem;padding:0 1.4rem;border-radius:.8rem;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.quiet{border-style:dashed;color:var(--muted)}
+.btn.sm{min-height:2.6rem;padding:0 .9rem;font-size:.95rem}
+.input{width:100%;min-height:3.3rem;padding:.6rem .9rem;border:2px solid var(--line);border-radius:.7rem;background:var(--surface);font-size:1.1rem}
+.input:focus,.btn:focus-visible,.chip:focus-visible,.tile:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+textarea.input{min-height:5.5rem;resize:none;line-height:1.35}
+.input.big{font-family:var(--serif);font-size:2.1rem;font-weight:700;min-height:4.2rem}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.chip{min-height:2.9rem;padding:.3rem 1rem;border-radius:2rem;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.chip.who{display:inline-flex;align-items:center;gap:.5rem}
+.dot{display:inline-block;width:.9rem;height:.9rem;border-radius:50%;flex:none}
+.label{font-weight:700;margin:0 0 .3rem}
+.board-card{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:1.1rem}
+
+/* team */
+.members{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:1rem}
+.member{border-top:8px solid var(--c);background:var(--surface);border-radius:.4rem .4rem 1rem 1rem;padding:1rem;display:flex;flex-direction:column;gap:.6rem;border-left:2px solid var(--line);border-right:2px solid var(--line);border-bottom:2px solid var(--line)}
+
+/* board / notes */
+.board{position:relative;flex:1;min-height:22rem;border:2px dashed var(--line);border-radius:1.1rem;background-image:radial-gradient(var(--line) 1.5px,transparent 1.5px);background-size:30px 30px;overflow:hidden}
+.board .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--serif);font-size:1.4rem;text-align:center;padding:2rem;pointer-events:none}
+.note{position:absolute;width:15.5rem;background:var(--c);color:var(--sticky-ink);padding:.8rem .9rem .6rem;border-radius:.2rem .2rem .2rem 1.4rem;box-shadow:0 .25rem .8rem rgba(0,0,0,.18);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.note.focus{outline:4px solid var(--brand);outline-offset:3px}
+.note .stem{font-size:.85rem;opacity:.7;margin:0 0 .15rem}
+.note .txt{font-size:1.08rem;line-height:1.3;margin:0 0 .5rem}
+.note .acts{display:flex;gap:.35rem;align-items:center;justify-content:space-between}
+.note button{border:0;background:rgba(0,0,0,.12);color:inherit;border-radius:.6rem;min-height:2.5rem;min-width:2.5rem;padding:0 .6rem;font-weight:700}
+.note .by{display:flex;align-items:center;gap:.4rem;font-size:.85rem;margin-top:.4rem}
+.banner{background:var(--brand-soft);border:2px solid var(--brand);border-radius:.9rem;padding:.7rem 1rem;font-family:var(--serif);font-size:1.15rem}
+
+/* statement */
+.stmt{font-family:var(--serif);font-size:1.6rem;line-height:1.6}
+.stmt .fill{background:var(--brand-soft);border-bottom:3px solid var(--brand);padding:0 .25rem}
+.stmt .blank{color:var(--muted);border-bottom:3px dashed var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:.55rem}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* analogy */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(12rem,1fr));gap:.8rem}
+.tile{min-height:6rem;border:2px solid var(--line);background:var(--surface);border-radius:1rem;font-family:var(--serif);font-size:1.25rem;font-weight:700;padding:.6rem;text-align:center}
+.tile[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.attrs{list-style:none;margin:0;padding:0;display:grid;gap:.5rem;counter-reset:a}
+.attrs li{display:flex;align-items:center;gap:.7rem;background:var(--surface);border:2px solid var(--line);border-radius:.8rem;padding:.4rem .6rem;min-height:3.2rem;counter-increment:a}
+.attrs li::before{content:counter(a);display:grid;place-items:center;width:2rem;height:2rem;border-radius:50%;background:var(--slate);color:var(--slate-ink);font-weight:700;flex:none}
+.attrs li span{flex:1}
+.progress{height:.6rem;background:var(--line);border-radius:1rem;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--ok);transition:width .25s}
+
+/* ideation */
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.9rem;flex:1;min-height:0;overflow:auto;align-content:start}
+.lane{background:var(--slate);border-radius:1rem;padding:.8rem;display:flex;flex-direction:column;gap:.6rem;min-height:12rem}
+.lane h4{font-family:var(--serif);font-size:1.15rem;margin:0}
+.lane .q{font-size:.92rem;color:var(--slate-ink);margin:0}
+.idea{background:var(--c);color:var(--sticky-ink);border-radius:.3rem .3rem .3rem 1.2rem;padding:.7rem .8rem;box-shadow:0 .2rem .6rem rgba(0,0,0,.15)}
+.idea.pick{outline:4px solid var(--brand);outline-offset:2px}
+.idea p{margin:0 0 .5rem;font-size:1.05rem}
+.idea .build{border-left:3px solid rgba(0,0,0,.3);padding-left:.6rem;margin:.3rem 0;font-size:.98rem}
+.idea .acts{display:flex;gap:.4rem;flex-wrap:wrap}
+.idea button{border:0;background:rgba(0,0,0,.12);color:inherit;border-radius:.6rem;min-height:2.5rem;padding:0 .8rem;font-weight:700}
+.composer{background:var(--surface);border:2px solid var(--brand);border-radius:1rem;padding:.8rem;display:flex;flex-direction:column;gap:.6rem}
+.composer .mode{font-weight:700;color:var(--brand-text)}
+
+/* pitch */
+.arc{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem;align-items:end}
+.arc .pc{background:var(--surface);border:2px solid var(--line);border-radius:1rem;padding:.9rem;display:flex;flex-direction:column;gap:.5rem}
+.arc .pc:nth-child(2){margin-bottom:1.2rem}
+.arc .pc:nth-child(3){margin-bottom:2.4rem;border-color:var(--brand)}
+.arc .pc:nth-child(4){margin-bottom:1.2rem}
+.pc h4{font-family:var(--serif);font-size:1.1rem;margin:0}
+.pc .hint{font-size:.9rem;color:var(--muted);margin:0}
+.canvaswrap{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:.7rem}
+canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeating-linear-gradient(0deg,transparent 0 31px,#e6e1d8 31px 32px);border-radius:.6rem;touch-action:none;cursor:crosshair}
+.swatch{width:2.6rem;height:2.6rem;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 2px var(--line);padding:0}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 4px var(--brand)}
+.pick{display:block;width:100%;text-align:left;min-height:4rem;padding:.8rem 1rem;border:2px solid var(--line);background:var(--surface);border-radius:.9rem;margin-bottom:.6rem;font-size:1.05rem;line-height:1.35}
+.pick[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.padstage{position:relative;container-type:inline-size}
+.stks{position:absolute;inset:0;pointer-events:none}
+.stk{position:absolute;width:15cqw;background:var(--c);color:var(--sticky-ink);border-radius:.2cqw .2cqw .2cqw 1.8cqw;box-shadow:0 .3cqw .9cqw rgba(0,0,0,.22);pointer-events:auto;font-size:1.35cqw;line-height:1.3;display:flex;flex-direction:column}
+.stk-bar{display:flex;align-items:center;justify-content:space-between;min-height:2.4rem;padding:0 .2rem 0 .6rem;touch-action:none}
+.stk-grip{flex:1;align-self:stretch;display:flex;align-items:center;cursor:grab;touch-action:none;opacity:.6;font-size:1.1rem;user-select:none}
+.stk-x{border:0;background:rgba(0,0,0,.12);color:inherit;border-radius:.5rem;min-width:2.2rem;min-height:2.2rem;font-weight:700}
+.stk-text{width:100%;border:0;background:transparent;color:inherit;font:inherit;resize:none;outline:none;padding:0 .8cqw 1cqw;overflow:hidden;min-height:5cqw}
+.stk-read{padding:1cqw;white-space:pre-wrap;min-height:5cqw}
+.stkbtn{width:2.6rem;height:2.6rem;border:2px solid rgba(0,0,0,.25);border-radius:.4rem;color:var(--sticky-ink);font-weight:700;font-size:1.3rem;padding:0}
+.shapes{position:absolute;inset:0;pointer-events:none}
+.shp{position:absolute;aspect-ratio:1;pointer-events:auto;touch-action:none;cursor:grab}
+.shp svg{display:block;width:100%;height:100%;overflow:visible}
+.shp.sel{outline:3px dashed var(--brand);outline-offset:3px}
+.shp .hdl,.shp .xbtn{display:none;position:absolute;width:2.4rem;height:2.4rem;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--brand);background:var(--brand);color:#fff;font-weight:700;padding:0;line-height:1;touch-action:none}
+.shp.sel .hdl,.shp.sel .xbtn{display:grid;place-items:center}
+.shp .hdl{right:-1.2rem;bottom:-1.2rem;cursor:nwse-resize}
+.shp .xbtn{right:-1.2rem;top:-1.2rem}
+.attrs li .input{border:0;background:transparent;padding:.3rem .2rem;min-height:2.6rem}
+.attrs li .tag{flex:none;font-size:.85rem;font-weight:700;color:var(--brand-text);background:var(--brand-soft);border-radius:2rem;padding:.15rem .7rem}
+.stage.wide{grid-template-columns:1fr}
+.stage.wide .rail{display:none}
+.tile.dim{opacity:.45;filter:grayscale(1)}
+.canvaswrap.fill{flex:1;min-height:22rem;display:flex;flex-direction:column}
+.canvaswrap.fill .padstage{flex:1;min-height:0}
+.sketch.fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;background:#fff}
+.empty-pad{position:absolute;inset:0;display:grid;place-items:center;color:#8a8580;font-family:var(--serif);font-size:1.1rem}
+.review{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1rem;align-items:start}
+.adm{position:fixed;inset:0;z-index:40;display:none;flex-direction:column;background:var(--bg);color:var(--ink)}
+.adm .body{flex:1;min-height:0;overflow:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem;width:100%;max-width:1800px;margin:0 auto}
+.gcard{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.8rem}
+.grow{display:grid;grid-template-columns:4.5rem minmax(0,1.8fr) minmax(0,1fr) auto;gap:1.2rem;align-items:start}
+.gnum{font-family:var(--serif);font-size:2.6rem;font-weight:700;color:var(--brand-text);line-height:1}
+.tname{font-family:var(--serif);font-size:1.3rem;font-weight:700}
+.pips{display:flex;gap:.3rem;margin:.5rem 0 .3rem}
+.pip{width:.85rem;height:.85rem;border-radius:50%;background:var(--line)}
+.pip.on{background:var(--ok)}
+.pip.cur{background:var(--brand)}
+.tag2{display:inline-block;margin-left:.5rem;font-size:.85rem;font-weight:700;color:#fff;background:var(--ok);border-radius:2rem;padding:.05rem .6rem}
+.gacts{display:flex;flex-direction:column;gap:.5rem;min-width:9.5rem}
+.fitwrap{flex:1;min-height:0;min-width:0;container-type:size;display:flex;align-items:center;justify-content:center}
+.so-card .fitwrap{align-items:flex-start}
+.fitbox{width:min(100cqw,calc(100cqh * var(--asp)));aspect-ratio:var(--asp);flex:none}
+.fitbox img{height:100%!important;object-fit:fill}
+.so{flex:1;min-height:20rem;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr);gap:1rem}
+.so.lean{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)}
+.so-col{display:flex;flex-direction:column;gap:1rem;min-height:0;min-width:0}
+.so-card{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:.7rem 1rem;display:flex;flex-direction:column;min-height:0;min-width:0;overflow:auto}
+.so-card h3{font-family:var(--serif);font-size:1.15rem;margin:0 0 .5rem}
+.ptop{display:flex;gap:1rem;align-items:center}
+.pdraw{flex:0 0 13rem}
+.prole{font-weight:700;font-size:.98rem;line-height:1.3}
+.plists{display:grid;grid-template-columns:1fr 1fr;gap:.2rem 1rem;font-size:.84rem;line-height:1.25;margin-top:.4rem}
+.plists ul{margin:.1rem 0;padding-left:1.1rem}
+.plists li{margin:.15rem 0}
+.stage.wide{padding-top:.5rem;padding-bottom:.7rem;gap:.6rem}
+.persona-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1rem;min-height:0}
+
+/* footer */
+.nav{display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;border-top:2px solid var(--line);background:var(--surface)}
+.nav .note-s{flex:1;font-size:.9rem;color:var(--muted)}
+
+/* overlay + toast */
+.present{position:fixed;inset:0;background:var(--brand);color:#fff;z-index:50;display:flex;flex-direction:column;justify-content:center;padding:5vw;gap:1.5rem}
+.present .k{font-size:1.4rem;opacity:.85}
+.present .v{font-family:var(--serif);font-size:clamp(2rem,4.2vw,4.4rem);line-height:1.2;font-weight:700;white-space:pre-wrap}
+.present .bar{position:absolute;left:5vw;right:5vw;bottom:4vh;display:flex;gap:1rem;align-items:center}
+.present .btn{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.6);color:#fff}
+.toast{position:fixed;left:50%;bottom:6rem;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.8rem 1.3rem;border-radius:2rem;z-index:60;font-weight:700;max-width:90vw;text-align:center}
+
+@media (max-width:900px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  .stage{grid-template-columns:1fr;grid-template-rows:auto;overflow:visible}
+  .persona-grid,.two,.review,.grow,.so,.so.lean{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Legal Design Workshop</h1>
+      <div class="sub" id="subtitle">Touchscreen demo</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="seg" role="group" aria-label="Choose case">
+      <button data-mode="bob" aria-pressed="true">Bob Anderson case</button>
+      <button data-mode="omv" aria-pressed="false">O’Melveny challenge</button>
+      <button data-mode="plg" aria-pressed="false">Potomac · Day 1</button>
+      <button data-mode="plg2" aria-pressed="false">Potomac · Day 2</button>
+    </div>
+    <button class="tbtn" id="b-sample">Fill sample</button>
+    <button class="tbtn" id="b-reset">Reset</button>
+    <button class="tbtn" id="b-full">Full screen</button>
+    <div class="timer" id="timer">
+      <button class="face" id="t-face" aria-label="Start or pause timer">
+        <svg viewBox="0 0 50 50"><circle class="bg" cx="25" cy="25" r="21"/><circle class="fg" id="t-ring" cx="25" cy="25" r="21" stroke-dasharray="131.9" stroke-dashoffset="0"/></svg>
+        <span class="t" id="t-time">5:00</span>
+        <span id="t-state" style="font-size:.85rem;opacity:.85">Start</span>
+      </button>
+      <button class="mini" id="t-plus" aria-label="Add one minute">+1</button>
+      <button class="mini" id="t-reset" aria-label="Reset timer">↺</button>
+    </div>
+  </header>
+  <nav class="stepper" id="stepper" aria-label="Workshop steps"></nav>
+  <main class="stage" id="stage">
+    <aside class="rail" id="rail"></aside>
+    <section class="work" id="work"></section>
+  </main>
+  <footer class="nav">
+    <button class="btn" id="b-back">Back</button>
+    <div class="note-s">Prototype: everything lives on this screen only and clears on reset or reload.</div>
+    <button class="btn primary" id="b-next">Next</button>
+  </footer>
+</div>
+
+<script>
+/* ---------- tiny helpers ---------- */
+const $ = s => document.querySelector(s);
+function h(tag, props, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(props || {})){
+    if (k === "class") el.className = v;
+    else if (k === "style") el.style.cssText = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "value") el.value = v;
+    else if (v === true) el.setAttribute(k, "");
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat(Infinity)){
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  }
+  return el;
+}
+function toast(msg){
+  const t = h("div", {class:"toast", role:"status"}, msg);
+  document.body.append(t);
+  setTimeout(() => t.remove(), 2600);
+}
+const uid = () => Math.random().toString(36).slice(2, 9);
+const MEMBER_COLORS = ["#a51c30", "#1f6f8b", "#4b7f3a", "#b7791f", "#7a3fa0", "#d6458f"];
+const STICKY = ["var(--s0)", "var(--s1)", "var(--s2)", "var(--s3)"];
+
+/* ---------- case content ---------- */
+const ATTRS = {
+  "Amazon Prime": ["Fast, predictable delivery", "One-click ordering", "Perks bundled into one membership", "Personalized recommendations", "Easy returns, no questions", "Feels like the company has your back"],
+  "Uber / Rideshare": ["Two-way ratings create a feedback loop", "See progress in real time", "Price is clear up front", "On demand, no scheduling", "Payment disappears into the background", "Matches the right driver to the right rider"],
+  "Uber Eats": ["Live order tracking", "Huge choice in one place", "Ratings you can trust", "Delivered to wherever you are", "Reorder in two taps"],
+  "Peloton": ["Leaderboard and community", "Pick the instructor you connect with", "Streaks and milestones keep you going", "Live or on demand", "Progress is always visible"],
+  "Smart phones": ["Everything in one device", "Intuitive from the first minute", "Works the same everywhere", "Gets better with updates", "Always with you"],
+  "iPhones": ["Everything in one device", "Intuitive from the first minute", "Ecosystem that just works together", "Gets better with updates", "Simple, beautiful design"],
+  "Rimowa suitcases": ["Built to last", "Instantly recognizable", "Glides effortlessly", "Smart internal organization", "Repairable, not disposable"],
+  "Pickleball": ["Learn in ten minutes", "Social by design", "Small court keeps games fast", "Mixed skill levels can play together", "Cheap and easy to start"],
+  "Netflix": ["Personalized suggestions", "Pick up where you left off", "Low commitment, cancel anytime", "Watch anywhere", "Series you can binge"],
+  "ChatGPT": ["Ask in plain language", "Instant first draft", "Iterate by conversation", "Anyone can use it", "Remembers context"]
+};
+
+const CASES = {
+  bob: {
+    name: "Bob Anderson case",
+    subtitle: "Leadership in Law Firms · design for Bob Anderson",
+    challenge: "Come up with a creative, innovative solution that would SURPRISE AND DELIGHT Bob Anderson (and producer-managers like him at CCG).",
+    short: "Bob",
+    stem: "Bob hates it when…",
+    focusStem: "Bob hates it that…",
+    refresher: [
+      "Pressure to keep the Technology Group’s rapid growth going",
+      "Wants to flex the muscles he’s good at: working with clients",
+      "Resents his co-partner for not pulling his weight on client development and team management",
+      "High-performing VPs want to know if they’ll make partner, and complain about the strain on their personal lives",
+      "Associates feel less connected, supported and developed",
+      "Worried about preserving his own marriage"
+    ],
+    personas: null,
+    leadDefault: "Bob, a rainmaking practice group leader who is struggling to manage and lead across his many professional and personal responsibilities",
+    personaName: "Bob Anderson",
+    needs: ["share leadership without losing quality", "give rising VPs a clear, honest path to partnership", "spend more time on the client work he’s great at", "stay connected to and develop his associates", "protect time for his marriage and family"],
+    feelings: ["in control rather than stretched thin", "proud of the team he is building", "supported by his co-partner", "like a leader, not a firefighter", "energized rather than depleted"],
+    analogies: ["Amazon Prime", "Smart phones", "Uber / Rideshare", "Rimowa suitcases", "Pickleball", "Peloton"],
+    seed: {
+      team: "Clause Encounters of the Legal Kind",
+      members: [["Dana", "Draws on every napkin"], ["Marcus", "Listens to a lot of podcasts"]],
+      notes: ["his best VPs ask if they’ll make partner and he has no honest answer ready", "he’s the bottleneck on every decision while his co-partner stays out of the day-to-day", "strain on his team’s personal lives goes unseen until someone quits", "he has no time to check in with the growing bench of associates"],
+      focus: 0,
+      analogy: "Uber / Rideshare",
+      attrs: [0, 1, 2],
+      ideas: [["big", 0, "A partner-track “ride tracker” where every VP sees live progress toward partnership"], ["tiny", 1, "A two-way rating card: Bob rates the VP’s growth, the VP rates Bob’s mentoring"], ["worst", 0, "Announce partnership decisions by surprise group email"], ["attr", 1, "Using “Two-way ratings”: a 5-minute monthly feedback loop, both directions"]]
+    }
+  },
+  omv: {
+    name: "O’Melveny challenge",
+    subtitle: "How might we energize and support entrepreneurism among our partners?",
+    challenge: "How might we energize and support entrepreneurism among our partners?",
+    short: "your end-user",
+    stem: "I hate it when…",
+    focusStem: "I hate it that…",
+    refresher: null,
+    personas: [
+      {id: "lat", label: "Recently joined lateral partners", lead: "Jane, a recently joined lateral partner who is working hard to adapt to the firm and came on her own rather than as part of a group", name: "Jane"},
+      {id: "early", label: "New or early-stage partners", lead: "Sam, a new partner who is building a book of business for the first time", name: "Sam"},
+      {id: "senior", label: "Senior partners whose pipeline needs new energy", lead: "Priya, a senior partner whose new-client pipeline needs fresh energy", name: "Priya"},
+      {id: "we", label: "We are the end-users", lead: "We, partners at the firm", name: "Us"}
+    ],
+    leadDefault: "",
+    personaName: "",
+    needs: ["grow her client base and use the firm as a platform", "connect and collaborate with partners serving similar clients", "understand the firm’s capabilities and culture", "share her expertise and fresh-eyes perspective with other partners"],
+    feelings: ["connected to other partners in a meaningful way", "proud of the firm and excited to grow her practice", "more capable of serving clients with a broader range of services"],
+    analogies: ["Amazon Prime", "Uber Eats", "ChatGPT", "Netflix", "iPhones"],
+    seed: {
+      team: "Origination Station",
+      members: [["Alex", "Connects people at every event"], ["Jordan", "Loves a good spreadsheet"], ["Casey", "Sketches ideas in meetings"]],
+      persona: "lat",
+      notes: ["since joining as a lateral I haven’t been able to meet partners serving similar clients", "I don’t know what the firm can already do for the clients I bring", "my ideas for new work sit in my head because there’s no easy place to test them"],
+      focus: 0,
+      analogy: "Netflix",
+      attrs: [0, 1, 3],
+      ideas: [["big", 0, "A firm-wide “watchlist” that suggests partners and clients you should meet next"], ["tiny", 1, "A one-line card on every lateral’s door: “Ask me about…”"], ["worst", 2, "Mandatory speed-networking at 7am"], ["attr", 0, "Using “Personalized suggestions”: a weekly Top 3 collaboration matches email"]]
+    }
+  }
+};
+
+CASES.plg = {
+  name: "Potomac Law Group",
+  subtitle: "Potomac Law Group · Looking for market gaps",
+  challenge: "Look for market gaps: unmet needs of talented lawyers and of clients and buyers of legal services.",
+  short: "", stem: "", focusStem: "", refresher: null, personas: null, leadDefault: "", personaName: "",
+  needs: [], feelings: [], analogies: [], seed: null
+};
+
+CASES.plg2 = {
+  name: "Potomac Day 2", subtitle: "Potomac Law Group · Pulling it all together",
+  challenge: "Choose one pain point from the Day 1 discussion and design a solution.",
+  short: "", stem: "Idea:", focusStem: "", refresher: null, personas: null, leadDefault: "", personaName: "",
+  needs: [], feelings: [], analogies: ["Amazon Prime", "Uber Eats", "ChatGPT", "Netflix", "iPhones"], seed: null
+};
+
+/* ---------- state ---------- */
+let S;
+function freshState(mode){
+  const c = CASES[mode];
+  return {
+    mode, stage: 0,
+    team: {name: "", members: Array.from({length: mode === "plg2" ? 4 : 2}, () => ({name: "", talent: ""}))},
+    personaId: c.personas ? c.personas[0].id : null,
+    notes: [], focusId: null, focusText: "",
+    pers: {name: c.personaName, role: "", tenure: "", frust: "", wants: ""},
+    lead: c.personas ? c.personas[0].lead : c.leadDefault,
+    needOpts: [...c.needs], feelOpts: [...c.feelings], needs: [], feelings: [],
+    analogy: null, attrs: [],
+    ideas: [], pickId: null,
+    draft: {lane: "big", author: 0, text: "", buildOn: null},
+    pitch: {key: "", idea: "", why: "", matter: ""},
+    drawing: null, pen: "#1f1c1b", eraser: false,
+    drawing2: null, whiteboard: null, maxStage: 0, imgRev: {}, stickies: {whiteboard: []}, padAspect: {}, shapes: {drawing: [], drawing2: [], whiteboard: []}, attrSlots: null, attrStore: {}, analogyKey: null, otherName: "",
+    d2: {pool: {talent: [], client: []}, chosen: "", kind: "", ideas: [], shown: false, drawer: false},
+    plg: {who: 0, talent: [], talentPin: null, talentAgreed: "", talentShown: false, client: [], clientPin: null, clientAgreed: "", clientShown: false, gap: ""}
+  };
+}
+const C = () => CASES[S.mode];
+const mName = i => (S.team.members[i] && S.team.members[i].name.trim()) || ("Teammate " + (i + 1));
+
+const STAGES_BY = {
+  bob: [
+    {id: "team", short: "Team", phase: "Phase 1 · Team formation", title: "Meet your teammate", mins: 5, render: rTeam},
+    {id: "pain", short: "Pain points", phase: "Phase 2 · Empathize and define", title: "What really bugs them?", mins: 5, render: rPain},
+    {id: "persona", short: "Persona", phase: "Phase 2 · Empathize and define", title: "Draw your end-user", mins: 10, render: rPersona},
+    {id: "problem", short: "Problem", phase: "Phase 2 · Empathize and define", title: "Define the problem", mins: 10, render: rProblem},
+    {id: "analogy", short: "Great thing", phase: "Phase 3 · Ideation", title: "Borrow from something you love", mins: 7, render: rAnalogy},
+    {id: "ideate", short: "Ideas", phase: "Phase 3 · Ideation", title: "Rapid ideation", mins: 15, render: rIdeate},
+    {id: "pitch", short: "Pitch", phase: "Phase 4 · Pitching", title: "Prepare your 2-minute pitch", mins: 5, render: rPitch}
+  ],
+  plg: [
+    {id: "group", short: "Group", phase: "Looking for market gaps", title: "Who’s in your group?", mins: 2, suggested: true, render: rPlgGroup},
+    {id: "talent", short: "Talent", phase: "Part one · Legal talent", title: "Pain points of talented lawyers", mins: 10, suggested: true, render: () => plgPart("talent", 1)},
+    {id: "client", short: "Clients", phase: "Part two · Clients and buyers", title: "Pain points of clients", mins: 10, suggested: true, render: () => plgPart("client", 2)},
+    {id: "gap", short: "Market gap", phase: "Wrap-up", title: "Market gap snapshot", mins: 5, suggested: true, render: rPlgSnapshot}
+  ]
+};
+STAGES_BY.plg2 = [
+  {id: "team", short: "Form your team", phase: "Team formation", title: "Form your team", mins: 5, render: rTeam},
+  {id: "focus", short: "Problem focus", phase: "Pulling it all together", title: "Choose your problem focus", mins: 10, suggested: true, render: rD2Focus},
+  {id: "persona", short: "End user", phase: "Empathize and define", title: "Who is Your End User", mins: 10, render: rPersona},
+  {id: "problem", short: "Framing the Problem", phase: "Empathize and define", title: "Framing the Problem", mins: 10, render: rProblem},
+  {id: "analogy", short: "Great thing", phase: "Ideation", title: "Borrow from something you love", mins: 7, render: rAnalogy},
+  {id: "individual", short: "Individual Brainstorming", phase: "Ideation", title: "Individual Brainstorming", mins: 5, render: rD2Individual},
+  {id: "group", short: "Group Brainstorm", phase: "Ideation", title: "Group Brainstorm", mins: 15, full: true, render: rD2Group},
+  {id: "share", short: "Share-out", phase: "Share", title: "Share-out", mins: 5, full: true, render: rD2Share}
+];
+STAGES_BY.plg2.slice(1).forEach(x => { x.timed = false; });
+STAGES_BY.omv = STAGES_BY.bob;
+const STG = () => STAGES_BY[S.mode];
+
+/* ---------- timer ---------- */
+const T = {left: 300, total: 300, end: 0, running: false};
+const CIRC = 131.9;
+function setTimer(mins){ T.total = T.left = Math.round(mins * 60); T.running = false; $("#timer").classList.remove("done"); drawTimer(); }
+function drawTimer(){
+  const m = Math.floor(T.left / 60), s = T.left % 60;
+  $("#t-time").textContent = m + ":" + String(s).padStart(2, "0");
+  $("#t-ring").style.strokeDashoffset = String(CIRC * (1 - (T.total ? T.left / T.total : 0)));
+  $("#t-state").textContent = T.running ? "Pause" : (T.left === 0 ? "Done" : "Start");
+}
+function beep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .25, .5].forEach(d => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; g.gain.value = .15; o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + d); o.stop(ctx.currentTime + d + .15); });
+  }catch(e){}
+}
+setInterval(() => {
+  if (!T.running) return;
+  const left = Math.max(0, Math.round((T.end - Date.now()) / 1000));
+  if (left !== T.left){ T.left = left; drawTimer(); }
+  if (left === 0){ T.running = false; $("#timer").classList.add("done"); beep(); drawTimer(); }
+}, 250);
+$("#t-face").onclick = () => {
+  if (T.running){ T.left = Math.max(0, Math.round((T.end - Date.now()) / 1000)); T.running = false; }
+  else if (T.left > 0){ T.end = Date.now() + T.left * 1000; T.running = true; $("#timer").classList.remove("done"); }
+  drawTimer();
+};
+$("#t-plus").onclick = () => { T.left += 60; T.total = Math.max(T.total, T.left); if (T.running) T.end += 60000; drawTimer(); };
+$("#t-reset").onclick = () => setTimer(STG()[S.stage].mins);
+
+/* ---------- shell ---------- */
+function railWrap(i, ...nodes){
+  const st = typeof i === "string" ? STG().find(x => x.id === i) : STG()[i];
+  return [
+    h("p", {class: "phase"}, st.phase),
+    h("h2", {}, st.title),
+    st.timed === false ? null : h("span", {class: "timepill"}, (st.suggested ? "Suggested time: " : "Time: ") + st.mins + " minutes"),
+    ...nodes
+  ];
+}
+function go(i){
+  saveSketch();
+  S.stage = Math.max(0, Math.min(STG().length - 1, i));
+  setTimer(STG()[S.stage].mins);
+  render();
+  if (typeof liveTick === "function") liveTick();
+}
+function render(){
+  S.maxStage = Math.max(S.maxStage || 0, S.stage);
+  const st = STG()[S.stage];
+  $("#subtitle").textContent = C().subtitle + (S.groupNo ? " · Group " + S.groupNo : "");
+  $("#timer").style.display = st.timed === false ? "none" : "";
+  $("#stage").classList.toggle("wide", !!st.full);
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === S.mode)));
+  const sp = $("#stepper"); sp.replaceChildren(...STG().map((s, i) =>
+    h("button", {class: "step" + (i === S.stage ? " on" : "") + (i < S.stage ? " done" : ""), onclick: () => go(i), "aria-current": i === S.stage ? "step" : null},
+      h("span", {class: "n"}, i < S.stage ? "✓" : String(i + 1)), s.short)));
+  const out = st.render();
+  $("#rail").replaceChildren(...out.rail.flat(Infinity).filter(Boolean));
+  $("#work").replaceChildren(...out.work.flat(Infinity).filter(Boolean));
+  $("#rail").scrollTop = 0;
+  if (out.after) out.after();
+  $("#b-back").style.visibility = S.stage === 0 ? "hidden" : "visible";
+  $("#b-next").textContent = S.stage === STG().length - 1 ? (S.mode === "plg" ? "Present the snapshot" : S.mode === "plg2" ? "Present" : "Present the pitch") : "Next: " + STG()[S.stage + 1].short;
+}
+$("#b-back").onclick = () => go(S.stage - 1);
+$("#b-next").onclick = () => { if (S.stage === STG().length - 1) present(); else go(S.stage + 1); };
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { if (S.mode !== b.dataset.mode){ const prev = S; S = freshState(b.dataset.mode); if (prev.mode === "plg" && S.mode === "plg2"){ S.plg = prev.plg; S.team = prev.team; } setTimer(STG()[0].mins); render(); } });
+$("#b-reset").onclick = () => { S = freshState(S.mode); applyGroupHash(); setTimer(STG()[0].mins); render(); toast("Cleared. Fresh board."); };
+$("#b-full").onclick = () => { try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} };
+$("#b-sample").onclick = () => { fillSample(); render(); toast("Sample data loaded so you can click through"); };
+
+/* ---------- sample data ---------- */
+function fillSample(){
+  if (S.mode === "plg") return fillPlg();
+  if (S.mode === "plg2") return fillD2();
+  const c = C(), sd = c.seed; const mode = S.mode; S = freshState(mode);
+  S.team.name = sd.team;
+  S.team.members = sd.members.map(m => ({name: m[0], talent: m[1]}));
+  if (sd.persona){ const p = c.personas.find(x => x.id === sd.persona); S.personaId = p.id; S.lead = p.lead; S.pers.name = p.name; }
+  S.notes = sd.notes.map((t, i) => ({id: uid(), text: t, author: i % S.team.members.length, votes: i === sd.focus ? 2 : (i === 1 ? 1 : 0), x: 18 + (i % 4) * 255, y: 18 + Math.floor(i / 4) * 175 + (i % 2) * 14}));
+  S.focusId = S.notes[sd.focus].id; S.focusText = S.notes[sd.focus].text;
+  S.pers.role = mode === "bob" ? "Practice group leader, Technology Group" : "Lateral partner, 14 months at the firm";
+  S.pers.tenure = mode === "bob" ? "11 years at the firm" : "14 months";
+  S.pers.frust = S.focusText;
+  S.pers.wants = c.needs[0];
+  S.needs = [c.needs[1], c.needs[0]].slice(0, 2); S.feelings = [c.feelings[0]];
+  S.analogy = sd.analogy; S.attrs = sd.attrs.map(i => ATTRS[sd.analogy][i]);
+  S.ideas = sd.ideas.map(x => ({id: uid(), lane: x[0], author: x[1] % S.team.members.length, text: x[2], builds: [], votes: 0}));
+  S.ideas[0].builds.push({text: "and the senior partner sponsor gets a ping when it’s time to check in", author: 1 % S.team.members.length});
+  S.pickId = S.ideas[3].id;
+  S.stage = 0;
+}
+
+/* ---------- stage 1: team ---------- */
+function rTeam(){
+  const rail = railWrap(0,
+    h("ol", {},
+      h("li", {}, "Come up with a FUN name for your team. Make it something you’d be proud to shout across the room."),
+      h("li", {}, "For each member, identify at least one hidden talent that might help on this project.")),
+    h("p", {class: "muted"}, "Examples: “I love to draw.” “I listen to a lot of podcasts.”"),
+    h("p", {class: "label"}, "Need inspiration? Past team names"),
+    h("div", {class: "chips"}, ["Res Ipsa No-Quitters", "Clause Encounters of the Legal Kind"].map(n =>
+      h("button", {class: "chip", onclick: () => { S.team.name = n; render(); }}, n))));
+  const members = h("div", {class: "members"}, S.team.members.map((m, i) =>
+    h("div", {class: "member", style: "--c:" + MEMBER_COLORS[i]},
+      h("label", {class: "label"}, "Team member " + (i + 1)),
+      h("input", {class: "input", placeholder: "Name", value: m.name, oninput: e => { m.name = e.target.value; }}),
+      h("label", {class: "label"}, "Hidden talent"),
+      h("input", {class: "input", placeholder: "e.g. I love to draw", value: m.talent, oninput: e => { m.talent = e.target.value; }}),
+      i >= 2 ? h("button", {class: "btn sm quiet", onclick: () => { S.team.members.splice(i, 1); render(); }}, "Remove") : null)));
+  const work = [
+    h("div", {class: "board-card"},
+      h("label", {class: "label"}, "Our fun team name"),
+      h("input", {class: "input big", placeholder: "Tap to give your team a fun name", value: S.team.name, oninput: e => { S.team.name = e.target.value; }})),
+    members,
+    S.team.members.length < 6 ? h("div", {}, h("button", {class: "btn quiet", onclick: () => { S.team.members.push({name: "", talent: ""}); render(); }}, "Add a teammate")) : null
+  ];
+  return {rail, work};
+}
+
+/* ---------- stage 2: pain points (reusable sticky-note board) ---------- */
+function buildBoard(o){
+  const author = h("div", {class: "row"}, S.team.members.map((m, i) =>
+    h("button", {class: "chip who", "aria-pressed": String(S.draft.author === i), onclick: () => {
+      S.draft.author = i; author.querySelectorAll(".chip").forEach((b, j) => b.setAttribute("aria-pressed", String(S.draft.author === j))); }},
+      h("span", {class: "dot", style: "background:" + MEMBER_COLORS[i]}), mName(i))));
+  const inp = h("input", {class: "input", placeholder: o.placeholder || (o.stem + " (tap, then type)"), style: "flex:1;min-width:14rem",
+    onkeydown: e => { if (e.key === "Enter") add(); }});
+  const board = h("div", {class: "board"});
+  let ta = null, banner = null, focusEl = null;
+  if (o.noFocus){ /* no focus box */ }
+  else if (o.editable){
+    ta = h("textarea", {class: "input", placeholder: "Pin a note with ☆ or type your agreed pain point here", value: o.getText(), oninput: e => o.setText(e.target.value)});
+    focusEl = h("div", {class: "board-card"}, h("label", {class: "label"}, o.focusLabel), ta);
+  } else { banner = h("div", {class: "banner"}); focusEl = banner; }
+  function drawFocus(){
+    if (o.noFocus) return;
+    if (ta) ta.value = o.getText();
+    else { banner.style.display = o.getText() ? "block" : "none"; banner.textContent = o.focusLabel + " " + o.getText(); }
+  }
+  function add(){
+    const t = inp.value.trim(); if (!t) return;
+    const n = o.list().length;
+    o.list().push({id: uid(), text: t, author: S.draft.author, votes: 0, x: 18 + (n % 4) * 255, y: 18 + Math.floor(n / 4) * 175 + (n % 2) * 14});
+    inp.value = ""; drawNotes();
+  }
+  let z = 1;
+  function drawNotes(){
+    board.replaceChildren();
+    const hid = o.hidden && o.hidden();
+    if (!o.list().length) board.append(h("div", {class: "empty"}, "Add your first note above.\nIt appears here as a sticky note you can drag."));
+    o.list().forEach(n => {
+      const del = h("button", {"aria-label": "Delete note", onclick: e => { e.stopPropagation(); o.setList(o.list().filter(x => x !== n)); o.onDelete(n); drawNotes(); drawFocus(); }}, "✕");
+      const acts = hid ? h("div", {class: "acts"}, h("span", {}), del) : h("div", {class: "acts"},
+        h("button", {"aria-label": "Vote", onclick: e => { e.stopPropagation(); n.votes++; drawNotes(); }}, "▲ " + n.votes),
+        h("button", {"aria-label": "Pin as focus", onclick: e => { e.stopPropagation(); o.pin(n); drawNotes(); drawFocus(); }}, o.isPinned(n) ? (o.pinOn || "★ Pinned") : (o.pinOff || "☆ Pin")),
+        del);
+      const el = h("div", {class: "note" + (o.isPinned(n) ? " focus" : ""), style: "left:" + n.x + "px;top:" + n.y + "px;--c:" + STICKY[n.author % 4]},
+        h("p", {class: "stem"}, o.stem),
+        hid ? h("p", {class: "txt", style: "font-style:italic;opacity:.7"}, "Written. Hidden until your group shares.") : h("p", {class: "txt"}, n.text),
+        acts,
+        h("div", {class: "by"}, h("span", {class: "dot", style: "background:" + MEMBER_COLORS[n.author]}), mName(n.author)));
+      let sx, sy, ox, oy, drag = false;
+      el.addEventListener("pointerdown", e => {
+        if (e.target.closest("button")) return;
+        drag = true; sx = e.clientX; sy = e.clientY; ox = n.x; oy = n.y; el.setPointerCapture(e.pointerId); el.style.zIndex = ++z; el.style.cursor = "grabbing";
+      });
+      el.addEventListener("pointermove", e => {
+        if (!drag) return;
+        const r = board.getBoundingClientRect();
+        n.x = Math.max(0, Math.min(r.width - el.offsetWidth, ox + e.clientX - sx));
+        n.y = Math.max(0, Math.min(r.height - el.offsetHeight, oy + e.clientY - sy));
+        el.style.left = n.x + "px"; el.style.top = n.y + "px";
+      });
+      const end = () => { drag = false; el.style.cursor = "grab"; };
+      el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+      board.append(el);
+    });
+  }
+  const composer = h("div", {class: "composer"}, author, h("div", {class: "row"}, inp, h("button", {class: "btn primary", onclick: add}, "Add note")));
+  return {nodes: [composer, focusEl, board], inp, after: () => { drawNotes(); drawFocus(); }};
+}
+
+function rPain(){
+  const c = C();
+  const rail = railWrap(1);
+  if (c.refresher){
+    rail.push(h("h3", {}, "What about Bob?"), h("ul", {}, c.refresher.map(t => h("li", {}, t))));
+  } else {
+    rail.push(h("p", {}, c.challenge), h("h3", {}, "Who are you designing for?"),
+      h("div", {class: "chips"}, c.personas.map(p =>
+        h("button", {class: "chip", "aria-pressed": String(S.personaId === p.id), onclick: () => { S.personaId = p.id; S.lead = p.lead; S.pers.name = p.name; render(); }}, p.label))));
+  }
+  rail.push(h("div", {class: "ask"}, "Channel your inner " + (c.refresher ? "Bob" : "end-user") + ". Add 3–4 specific pain points: “" + c.stem + "”"),
+    h("p", {class: "muted"}, "Make inferences from what you heard. Drag notes to cluster them, vote with ▲, then pin one star as your focus."));
+  const b = buildBoard({
+    stem: c.stem, focusLabel: "Our focus: " + c.focusStem, editable: false,
+    list: () => S.notes, setList: a => { S.notes = a; },
+    getText: () => S.focusText, setText: v => { S.focusText = v; },
+    isPinned: n => S.focusId === n.id,
+    pin: n => { S.focusId = n.id; S.focusText = n.text; S.pers.frust = S.pers.frust || n.text; },
+    onDelete: n => { if (S.focusId === n.id){ S.focusId = null; S.focusText = ""; } }
+  });
+  return {rail, work: b.nodes, after: b.after};
+}
+
+/* ---------- stage 3: persona sketch ---------- */
+let pads = [];
+function saveSketch(){ pads.forEach(p => { if (document.body.contains(p.cv)) S[p.key] = p.cv.toDataURL(); }); }
+const PALETTE = ["#1f1c1b", "#8a8580", "#7a5230", "#c62828", "#e8710a", "#f2c200", "#4b7f3a", "#1f8a8a", "#2563c4", "#7a3fa0", "#d6458f"];
+const SKIN = ["#fbe3d0", "#f1c9a5", "#d9a066", "#b87a4b", "#8a5a3c", "#4f2f20"];
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+function shapeSvg(sh){
+  const st = 'fill="' + sh.color + '" fill-opacity="0.92" stroke="rgba(0,0,0,.3)" stroke-width="2"';
+  const body = sh.type === "circle" ? '<circle cx="50" cy="50" r="48" ' + st + '/>'
+    : sh.type === "square" ? '<rect x="2" y="2" width="96" height="96" rx="3" ' + st + '/>'
+    : '<polygon points="50,4 97,95 3,95" ' + st + '/>';
+  return '<svg viewBox="0 0 100 100" aria-hidden="true">' + body + '</svg>';
+}
+function placeShape(el, sh){ el.style.left = sh.x * 100 + "%"; el.style.top = sh.y * 100 + "%"; el.style.width = sh.s * 100 + "%"; }
+
+/* Editable pad: freehand canvas + movable/resizable shapes. Auto-saves to S[key] and S.shapes[key]. */
+function sketchPad(key, opts){
+  opts = opts || {};
+  const fill = !!opts.fill;
+  const cv = h("canvas", {class: "sketch" + (fill ? " fill" : ""), width: fill ? 1800 : 1000, height: fill ? 700 : 640});
+  pads = [{cv, key}];
+  S.shapes[key] = S.shapes[key] || [];
+  S.padAspect[key] = cv.width / cv.height;
+  const ctx = cv.getContext("2d");
+  const setCtx = () => { ctx.lineCap = "round"; ctx.lineJoin = "round"; };
+  setCtx();
+  const restore = () => { if (S[key]){ const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, cv.width, cv.height); img.src = S[key]; } };
+  restore();
+  const layer = h("div", {class: "shapes"});
+  const list = () => S.shapes[key];
+  let sel = null;
+  const mark = () => layer.querySelectorAll(".shp").forEach(e => e.classList.toggle("sel", e.dataset.id === sel));
+  const place = placeShape;
+  function drawShapes(){
+    layer.replaceChildren();
+    list().forEach(sh => {
+      const hdl = h("div", {class: "hdl", role: "button", "aria-label": "Resize shape"});
+      const del = h("button", {class: "xbtn", "aria-label": "Delete shape", onclick: e => { e.stopPropagation(); S.shapes[key] = list().filter(x => x !== sh); if (sel === sh.id) sel = null; drawShapes(); }}, "✕");
+      const el = h("div", {class: "shp", "data-id": sh.id}, del, hdl);
+      el.insertAdjacentHTML("afterbegin", shapeSvg(sh));
+      place(el, sh);
+      el.addEventListener("pointerdown", e => {
+        if (e.target.closest(".hdl,.xbtn")) return;
+        sel = sh.id; mark();
+        const r = layer.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, ox = sh.x, oy = sh.y;
+        el.setPointerCapture(e.pointerId);
+        const mv = ev => {
+          const hf = sh.s * r.width / r.height;
+          sh.x = clamp(ox + (ev.clientX - sx) / r.width, 0, 1 - sh.s);
+          sh.y = clamp(oy + (ev.clientY - sy) / r.height, 0, 1 - hf);
+          place(el, sh);
+        };
+        const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); };
+        el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+      });
+      hdl.addEventListener("pointerdown", e => {
+        e.stopPropagation(); sel = sh.id; mark();
+        const r = layer.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, s0 = sh.s;
+        hdl.setPointerCapture(e.pointerId);
+        const mv = ev => {
+          const maxS = Math.min(1 - sh.x, (1 - sh.y) * r.height / r.width);
+          sh.s = clamp(s0 + ((ev.clientX - sx) + (ev.clientY - sy)) / 2 / r.width, 0.04, Math.max(0.04, maxS));
+          place(el, sh);
+        };
+        const up = () => { hdl.removeEventListener("pointermove", mv); hdl.removeEventListener("pointerup", up); hdl.removeEventListener("pointercancel", up); };
+        hdl.addEventListener("pointermove", mv); hdl.addEventListener("pointerup", up); hdl.addEventListener("pointercancel", up);
+      });
+      layer.append(el);
+    });
+    mark();
+  }
+  function addShape(type){
+    const n = list().length, s = 0.14, hf = s * cv.width / cv.height;
+    const sh = {id: uid(), type, color: S.pen, s, x: clamp((1 - s) / 2 + (n % 5) * 0.03, 0, 1 - s), y: clamp((1 - hf) / 2 + (n % 5) * 0.03, 0, 1 - hf)};
+    list().push(sh); sel = sh.id; drawShapes();
+  }
+  S.stickies[key] = S.stickies[key] || [];
+  const stkLayer = h("div", {class: "stks"});
+  const stks = () => S.stickies[key];
+  function drawStickies(focusId){
+    stkLayer.replaceChildren();
+    stks().forEach(st => {
+      const autosize = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
+      const ta = h("textarea", {class: "stk-text", rows: 3, placeholder: "Type an idea", value: st.text, oninput: e => { st.text = e.target.value; autosize(); }});
+      const grip = h("div", {class: "stk-grip", "aria-label": "Drag sticky note"}, "⠿");
+      const del = h("button", {class: "stk-x", "aria-label": "Delete sticky note", onclick: e => { e.stopPropagation(); S.stickies[key] = stks().filter(x => x !== st); drawStickies(); }}, "✕");
+      const el = h("div", {class: "stk", style: "--c:" + STICKY[st.color % 4] + ";left:" + st.x * 100 + "%;top:" + st.y * 100 + "%"}, h("div", {class: "stk-bar"}, grip, del), ta);
+      grip.addEventListener("pointerdown", e => {
+        const r = stkLayer.getBoundingClientRect(), sx = e.clientX, sy = e.clientY, ox = st.x, oy = st.y;
+        grip.setPointerCapture(e.pointerId);
+        const mv = ev => {
+          st.x = clamp(ox + (ev.clientX - sx) / r.width, 0, 0.83);
+          st.y = clamp(oy + (ev.clientY - sy) / r.height, 0, Math.max(0, 1 - el.offsetHeight / r.height));
+          el.style.left = st.x * 100 + "%"; el.style.top = st.y * 100 + "%";
+        };
+        const up = () => { grip.removeEventListener("pointermove", mv); grip.removeEventListener("pointerup", up); grip.removeEventListener("pointercancel", up); };
+        grip.addEventListener("pointermove", mv); grip.addEventListener("pointerup", up); grip.addEventListener("pointercancel", up);
+      });
+      stkLayer.append(el);
+      requestAnimationFrame(autosize);
+      if (st.id === focusId) ta.focus();
+    });
+  }
+  function addSticky(color){
+    const n = stks().length;
+    const st = {id: uid(), text: "", color, x: 0.04 + (n % 7) * 0.12, y: 0.06 + (n % 4) * 0.2};
+    stks().push(st); drawStickies(st.id);
+  }
+  let down = false, lx = 0, ly = 0;
+  const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  cv.addEventListener("pointerdown", e => { sel = null; mark(); down = true; cv.setPointerCapture(e.pointerId); [lx, ly] = pt(e); ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over"; ctx.fillStyle = S.pen; ctx.beginPath(); ctx.arc(lx, ly, S.eraser ? 18 : 2.5, 0, 6.3); ctx.fill(); });
+  cv.addEventListener("pointermove", e => {
+    if (!down) return;
+    const [x, y] = pt(e);
+    ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over";
+    ctx.strokeStyle = S.pen;
+    ctx.lineWidth = S.eraser ? 36 : (e.pointerType === "pen" && e.pressure ? 2 + e.pressure * 8 : 5);
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(x, y); ctx.stroke(); lx = x; ly = y;
+  });
+  const up = () => { if (down){ down = false; saveSketch(); } };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  const sw = p => { const t = document.createElement("i"); t.style.background = p; return t.style.background; };
+  const swatches = (opts.skin === false ? PALETTE : [...PALETTE, ...SKIN]).map((p, i) => h("button", {class: "swatch", style: "background:" + p, "aria-label": "Color " + (i + 1),
+    "aria-pressed": String(!S.eraser && S.pen === p),
+    onclick: () => {
+      S.pen = p; S.eraser = false;
+      swatches.forEach(b => b.setAttribute("aria-pressed", String(b.style.background === sw(p))));
+      eraserBtn.style.background = "";
+      const cur = list().find(x => x.id === sel); if (cur){ cur.color = p; drawShapes(); }
+    }}));
+  const eraserBtn = h("button", {class: "btn sm", "aria-pressed": String(S.eraser), onclick: e => { S.eraser = !S.eraser; e.currentTarget.style.background = S.eraser ? "var(--brand-soft)" : ""; }}, "Eraser");
+  const tools = h("div", {style: "display:flex;flex-direction:column;gap:.5rem;margin-bottom:.6rem"},
+    h("div", {class: "row", style: "gap:.45rem"}, swatches),
+    h("div", {class: "row"}, eraserBtn,
+      opts.shapes ? [
+        h("button", {class: "btn sm", onclick: () => addShape("circle")}, "● Circle"),
+        h("button", {class: "btn sm", onclick: () => addShape("triangle")}, "▲ Triangle"),
+        h("button", {class: "btn sm", onclick: () => addShape("square")}, "■ Square")] : null,
+      opts.stickies ? h("div", {class: "row", style: "gap:.4rem;margin:0 .6rem"}, h("span", {style: "font-weight:700"}, "Sticky note"),
+        [0, 1, 2, 3].map(c => h("button", {class: "stkbtn", style: "background:" + STICKY[c], "aria-label": "Add sticky note", onclick: () => addSticky(c)}, "+"))) : null,
+      h("button", {class: "btn sm quiet", onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); S[key] = null; S.shapes[key] = []; sel = null; drawShapes(); }}, "Clear drawing")));
+  drawShapes(); drawStickies();
+  const wrap = h("div", {class: "canvaswrap" + (fill ? " fill" : "")}, tools, h("div", {class: "padstage"}, cv, layer, stkLayer));
+  /* big whiteboards size their bitmap to the space available */
+  wrap.__fit = () => {
+    if (!fill) return;
+    const r = cv.getBoundingClientRect(); if (!r.width || !r.height) return;
+    cv.width = Math.round(r.width); cv.height = Math.round(r.height);
+    setCtx(); S.padAspect[key] = cv.width / cv.height; restore();
+  };
+  return wrap;
+}
+
+/* Read-only copy of a pad (drawing + shapes) for later pages. */
+function sketchView(key, ratio){
+  const asp = S.padAspect[key] ? String(S.padAspect[key]) : ratio;
+  const box = h("div", {class: "padstage", style: "background:#fff;border-radius:.6rem;border:2px solid var(--line);overflow:hidden" + (S[key] ? "" : ";aspect-ratio:" + asp)});
+  if (S[key]) box.append(h("img", {src: S[key], alt: "", style: "display:block;width:100%;height:auto"}));
+  else if (!(S.shapes[key] || []).length && !(S.stickies[key] || []).length) box.append(h("div", {class: "empty-pad"}, "Nothing drawn yet"));
+  const layer = h("div", {class: "shapes"});
+  (S.shapes[key] || []).forEach(sh => { const el = h("div", {class: "shp", style: "pointer-events:none;cursor:default"}); el.insertAdjacentHTML("afterbegin", shapeSvg(sh)); placeShape(el, sh); layer.append(el); });
+  box.append(layer);
+  const sl = h("div", {class: "stks"});
+  (S.stickies[key] || []).forEach(st => sl.append(h("div", {class: "stk", style: "--c:" + STICKY[st.color % 4] + ";left:" + st.x * 100 + "%;top:" + st.y * 100 + "%"}, h("div", {class: "stk-read"}, st.text || ""))));
+  box.append(sl);
+  return box;
+}
+function rPersona(){
+  const c = C(), d2 = S.mode === "plg2";
+  if (d2 && !S.pers.frust) S.pers.frust = S.d2.chosen;
+  const rail = railWrap("persona",
+    h("p", {}, c.refresher ? "Bob is your end-user. Sketch him, or a producer-manager like him, and capture what you know." : "Draw a picture of, name and describe one person who would greatly benefit if you solve your team’s " + (d2 ? "chosen pain point" : "problem") + ". Stick figures are fine."),
+    d2 ? h("div", {class: "ask"}, "Think: who is really struggling with this?!") : null,
+    h("p", {class: "muted"}, "Use a pen or your finger on the canvas. Then answer the questions on the right."));
+  const f = (label, key, ph, area) => h("div", {},
+    h("label", {class: "label"}, label),
+    h(area ? "textarea" : "input", {class: "input", placeholder: ph, value: S.pers[key], oninput: e => { S.pers[key] = e.target.value; }}));
+  const work = [h("div", {class: "persona-grid"},
+    sketchPad("drawing"),
+    h("div", {style: "display:flex;flex-direction:column;gap:.7rem"},
+      f("Name", "name", "Give them a name"),
+      f("Role, background, years in their role", "role", "e.g. a general counsel at a manufacturer, in role 5 years, formerly a law firm partner"),
+      f("What frustrates them about this challenge?", "frust", "In their words…", true),
+      f("What do they want or need?", "wants", "Wants and needs…", true)))];
+  return {rail, work};
+}
+
+/* ---------- stage 4: problem statement ---------- */
+function rProblem(){
+  const c = C();
+  const rail = railWrap("problem",
+    h("p", {}, S.mode === "plg2" ? "Review and add detail to the definition of your person’s problem." : "Pull together what you learned. Tap the needs and feelings that fit, or add your own, and watch the statement build."),
+    S.mode === "plg2" ? h("p", {class: "muted"}, "Tap the needs and feelings that fit, or add your own, and watch the statement build.") : null,
+    h("h3", {}, "The framework"),
+    h("p", {class: "muted"}, "[Persona] hates it that [pain point] and needs a way to [need] in a way that helps them feel [motivator]."),
+    h("p", {class: "muted"}, "Needs come from your pain points. Feelings come from your design principles."));
+  prefillD2();
+  if (S.mode === "plg2"){
+    const ul = arr => h("ul", {class: "muted"}, arr.map(t => h("li", {}, t)));
+    const lab = t => h("p", {class: "label", style: "margin:.7rem 0 .1rem"}, t);
+    rail.push(h("h3", {}, "Example"),
+      h("p", {style: "font-weight:700;margin:0"}, JANE.line),
+      lab("Pain points"), ul(JANE.pains),
+      lab("She needs a way to"), ul(JANE.needs),
+      lab("In a way that"), ul(JANE.motives));
+  }
+  const prev = h("div", {class: "board-card stmt"});
+  const span = (t, ph) => t && t.trim() ? h("span", {class: "fill"}, t) : h("span", {class: "blank"}, ph);
+  function drawStmt(){
+    prev.replaceChildren(span(S.lead, "[persona]"), ", hates it that ", span(S.focusText, "[pain point]"),
+      " and needs a way to ", span(S.needs.join("; "), "[need]"), MOT(), span(S.feelings.join(S.mode === "plg2" ? "; " : ", "), "[motivator]"), ".");
+  }
+  const chipSet = (opts, sel, key) => {
+    const box = h("div", {class: "chips"});
+    const own = h("input", {class: "input", placeholder: "Add your own", style: "max-width:18rem;min-height:2.9rem",
+      onkeydown: e => { if (e.key === "Enter") addOwn(); }});
+    function addOwn(){ const t = own.value.trim(); if (!t) return; S[opts].push(t); S[sel].push(t); own.value = ""; draw(); drawStmt(); }
+    function draw(){
+      box.replaceChildren(...S[opts].map(o => h("button", {class: "chip", "aria-pressed": String(S[sel].includes(o)),
+        onclick: () => { S[sel] = S[sel].includes(o) ? S[sel].filter(x => x !== o) : [...S[sel], o]; draw(); drawStmt(); }}, o)), own,
+        h("button", {class: "btn sm", onclick: addOwn}, "Add"));
+    }
+    draw(); return box;
+  };
+  const work = [
+    prev,
+    h("div", {class: "two"},
+      h("div", {}, h("label", {class: "label"}, "Who is it? (edit freely)"),
+        h("textarea", {class: "input", value: S.lead, oninput: e => { S.lead = e.target.value; drawStmt(); }})),
+      h("div", {}, h("label", {class: "label"}, S.mode === "plg2" ? "Pain point is (from your group’s choice)" : "Pain point (from your pinned note)"),
+        h("textarea", {class: "input", placeholder: S.mode === "plg2" ? "Choose a pain point on the problem focus step, or type here" : "Pin a note on the pain points step, or type here", value: S.focusText, oninput: e => { S.focusText = e.target.value; drawStmt(); }}))),
+    h("div", {}, h("p", {class: "label"}, "Needs a way to…"), chipSet("needOpts", "needs")),
+    h("div", {}, h("p", {class: "label"}, S.mode === "plg2" ? "In a way that…" : "In a way that helps them feel…"), chipSet("feelOpts", "feelings"))
+  ];
+  return {rail, work, after: drawStmt};
+}
+
+/* ---------- stage 5: analogy ---------- */
+function rAnalogy(){
+  const c = C(), d2 = S.mode === "plg2";
+  const rail = railWrap("analogy",
+    h("p", {}, d2 ? "Step away from your team’s chosen problem. Think about the sort of things you love." : "Step away from law for a moment. Think about the sort of things you love."),
+    h("ol", {},
+      h("li", {}, d2 ? "From this list pick ONE popular innovation you all appreciate – or add your own!" : "Pick one popular innovation you all appreciate (2 minutes)."),
+      h("li", {}, d2 ? "List the specific attributes that make it great. Aim for at least 6." : "List the specific attributes that make it great (5 minutes). Aim for at least 6.")),
+    h("div", {class: "ask"}, "What makes it great? How does it work? What need does it fill?"),
+    h("p", {class: "muted"}, "The first attribute is an example to get you started. Add as many more attributes as you need."));
+  const work = [];
+  const key = S.analogyKey || (S.analogy ? (c.analogies.includes(S.analogy) ? S.analogy : "Other") : null);
+  const tiles = h("div", {class: "tiles"}, [...c.analogies, "Other"].map(a =>
+    h("button", {class: "tile" + (key && key !== a ? " dim" : ""), "aria-pressed": String(key === a),
+      onclick: () => {
+        if (key && S.attrSlots) S.attrStore[key] = S.attrSlots;
+        S.analogyKey = a;
+        S.analogy = a === "Other" ? (S.otherName || "Our own great thing") : a;
+        S.attrSlots = S.attrStore[a] || null;
+        S.attrs = S.attrSlots ? S.attrSlots.map(x => x.trim()).filter(Boolean) : [];
+        render();
+      }}, a === "Other" ? "Other (add your own)" : a)));
+  work.push(tiles);
+  if (S.analogy){
+    const ex = (ATTRS[S.analogy] || [])[0] || "";
+    if (!S.attrSlots){
+      S.attrSlots = S.attrs.length ? [...S.attrs] : [ex];
+      while (S.attrSlots.length < 6) S.attrSlots.push("");
+    }
+    const sync = () => { S.attrs = S.attrSlots.map(x => x.trim()).filter(Boolean); };
+    sync();
+    const list = h("ul", {class: "attrs"});
+    const prog = h("div", {class: "progress"}, h("i"));
+    const count = h("span", {class: "muted"});
+    function drawCount(){
+      const n = S.attrs.length;
+      prog.firstChild.style.width = Math.min(100, n / 6 * 100) + "%";
+      count.textContent = n >= 6 ? n + " attributes. Minimum of 6 reached." : n + " of 6 minimum";
+    }
+    function draw(){
+      list.replaceChildren(...S.attrSlots.map((v, i) => h("li", {},
+        h("input", {class: "input", placeholder: "Attribute " + (i + 1), value: v, oninput: e => { S.attrSlots[i] = e.target.value; sync(); drawCount(); }}),
+        i === 0 && ex && v === ex ? h("span", {class: "tag"}, "Example") : null,
+        i >= 6 ? h("button", {class: "btn sm quiet", "aria-label": "Remove attribute", onclick: () => { S.attrSlots.splice(i, 1); sync(); draw(); }}, "✕") : null)));
+      drawCount();
+    }
+    const addSlot = () => { S.attrSlots.push(""); draw(); const ins = list.querySelectorAll("input"); ins[ins.length - 1].focus(); };
+    work.push(h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.7rem"},
+      (c.analogies.includes(S.analogy)
+        ? h("h3", {style: "font-family:var(--serif);margin:0;font-size:1.4rem"}, "We love " + S.analogy + " because it…")
+        : h("div", {}, h("label", {class: "label"}, "Name your great thing"), h("input", {class: "input", value: S.analogy, oninput: e => { S.analogy = e.target.value; S.otherName = e.target.value; }}))),
+      count, prog, list,
+      h("div", {}, h("button", {class: "btn quiet", onclick: addSlot}, "Add another attribute"))));
+    return {rail, work, after: draw};
+  }
+  work.push(h("div", {class: "board-card muted", style: "font-family:var(--serif);font-size:1.3rem"}, "Choose a great thing above to start listing its attributes."));
+  return {rail, work};
+}
+
+/* ---------- stage 6: ideation ---------- */
+const LANES = [
+  {id: "big", title: "Unlimited budget", q: "What if your idea had to cost at least $10 million to pull off?"},
+  {id: "tiny", title: "Ten dollars, tops", q: "What if your idea could cost no more than $10?"},
+  {id: "worst", title: "The worst idea", q: "What is the worst idea you could possibly imagine? Then flip it."},
+  {id: "attr", title: "Borrow an attribute", q: "How could one attribute of your great thing solve the problem?"}
+];
+function rIdeate(){
+  const c = C();
+  const rail = railWrap(5,
+    h("p", {}, "Heads down first: come up with at least three ideas on your own. Then share with no critique."),
+    h("div", {class: "ask"}, "Yes! What I like about that is… and… Tap Yes, and… on any idea to build on it."),
+    h("h3", {}, "Our problem"),
+    h("p", {class: "muted"}, [S.lead, " hates it that ", S.focusText || "…"].join("")),
+    S.analogy ? [h("h3", {}, "Borrow from " + S.analogy), h("p", {class: "muted"}, "Tap an attribute to start an idea with it."),
+      h("div", {class: "chips"}, S.attrs.map(a => h("button", {class: "chip", onclick: () => { S.draft.lane = "attr"; S.draft.text = "Using “" + a + "”: "; render(); }}, a)))] : null,
+    h("h3", {}, "Pick one"),
+    h("p", {class: "muted"}, "Star ONE idea with your partner to share with the whole group."),
+    h("button", {class: "btn sm quiet", onclick: () => toast("Concept: send your problem statement to Claude for three more ideas")}, "AI spark (concept)"));
+
+  const lanes = h("div", {class: "lanes"}, LANES.map(L =>
+    h("div", {class: "lane"}, h("h4", {}, L.title), h("p", {class: "q"}, L.q),
+      S.ideas.filter(i => i.lane === L.id).map(i =>
+        h("div", {class: "idea" + (S.pickId === i.id ? " pick" : ""), style: "--c:" + STICKY[i.author % 4]},
+          h("p", {}, i.text),
+          i.builds.map(b => h("div", {class: "build"}, "Yes, and… " + b.text + " (" + mName(b.author) + ")")),
+          h("div", {class: "acts"},
+            h("button", {onclick: () => { S.draft.buildOn = i.id; render(); }}, "Yes, and…"),
+            h("button", {onclick: () => { S.pickId = S.pickId === i.id ? null : i.id; render(); }}, S.pickId === i.id ? "★ Our pick" : "☆ Pick"),
+            h("button", {"aria-label": "Delete", onclick: () => { S.ideas = S.ideas.filter(x => x !== i); if (S.pickId === i.id) S.pickId = null; render(); }}, "✕")),
+          h("div", {style: "display:flex;align-items:center;gap:.4rem;font-size:.85rem;margin-top:.4rem"}, h("span", {class: "dot", style: "background:" + MEMBER_COLORS[i.author]}), mName(i.author))))
+      )));
+
+  const buildTarget = S.draft.buildOn && S.ideas.find(i => i.id === S.draft.buildOn);
+  const ta = h("textarea", {class: "input", style: "min-height:4.2rem", placeholder: buildTarget ? "Yes! What I like about that is… and…" : "Type an idea", value: S.draft.text, oninput: e => { S.draft.text = e.target.value; }});
+  function add(){
+    const t = S.draft.text.trim(); if (!t) return;
+    if (buildTarget) buildTarget.builds.push({text: t, author: S.draft.author});
+    else S.ideas.push({id: uid(), lane: S.draft.lane, author: S.draft.author, text: t, builds: [], votes: 0});
+    S.draft.text = ""; S.draft.buildOn = null; render();
+  }
+  const composer = h("div", {class: "composer"},
+    buildTarget ? h("div", {class: "mode"}, "Building on: “" + buildTarget.text.slice(0, 80) + (buildTarget.text.length > 80 ? "…" : "") + "”  ", h("button", {class: "btn sm", onclick: () => { S.draft.buildOn = null; render(); }}, "Cancel")) : null,
+    !buildTarget ? h("div", {class: "row"}, LANES.map(L => h("button", {class: "chip", "aria-pressed": String(S.draft.lane === L.id), onclick: () => { S.draft.lane = L.id; render(); }}, L.title))) : null,
+    h("div", {class: "row"}, S.team.members.map((m, i) => h("button", {class: "chip who", "aria-pressed": String(S.draft.author === i), onclick: () => { S.draft.author = i; render(); }}, h("span", {class: "dot", style: "background:" + MEMBER_COLORS[i]}), mName(i)))),
+    h("div", {class: "row"}, h("div", {style: "flex:1;min-width:16rem"}, ta), h("button", {class: "btn primary", onclick: add}, buildTarget ? "Add build" : "Add idea")));
+  return {rail, work: [lanes, composer]};
+}
+
+/* ---------- stage 7: pitch ---------- */
+function pickedIdea(){ const i = S.ideas.find(x => x.id === S.pickId); return i ? i.text + (i.builds.length ? " (and " + i.builds.map(b => b.text).join("; ") + ")" : "") : ""; }
+function rPitch(){
+  const rail = railWrap(6,
+    h("p", {}, "Prepare a 2-minute pitch for your great idea. Tell it as a story about your user."),
+    h("div", {class: "ask"}, "Who are they? What’s missing from their life? What’s the focus of your solution? What difference will it make?"),
+    h("p", {class: "muted"}, "We pre-filled what we could from earlier steps. Edit anything, then present.")) ;
+  if (!S.pitch.key) S.pitch.key = S.focusText;
+  if (!S.pitch.idea) S.pitch.idea = pickedIdea();
+  if (!S.pitch.why && S.analogy) S.pitch.why = "Like " + S.analogy + ", it " + (S.attrs[0] ? "leans on “" + S.attrs[0] + "”" : "borrows what people already love") + ".";
+  const card = (title, hint, key) => h("div", {class: "pc"}, h("h4", {}, title), h("p", {class: "hint"}, hint),
+    h("textarea", {class: "input", style: "min-height:7.5rem", value: S.pitch[key], oninput: e => { S.pitch[key] = e.target.value; }}));
+  const work = [
+    h("div", {class: "board-card"}, h("p", {class: "label"}, "Your team name"),
+      h("input", {class: "input big", placeholder: "Team name", value: S.team.name, oninput: e => { S.team.name = e.target.value; }})),
+    h("div", {class: "arc"},
+      card("Key insight", "What did you learn that set the stage? (Intro to user)", "key"),
+      card("Our idea", "What is your team’s idea? (Solution)", "idea"),
+      card("Why it will work", "What makes you think so? (Need met)", "why"),
+      card("Why it matters", "…for the future of law? (Outcome and impact)", "matter"))
+  ];
+  return {rail, work};
+}
+function present(){
+  const P = S.plg;
+  const D = S.d2;
+    const steps = S.mode === "plg2"
+    ? [["Our team", S.team.name || "Our team"], ["The pain point we chose", D.chosen], ["Our end user", [S.pers.name, S.pers.role].filter(Boolean).join("\n"), "drawing"],
+       ["Our problem statement", stmtText()], ["Our great thing: " + (S.analogy || ""), S.attrs.slice(0, 6).join("\n")], ["Our ideas", "", "whiteboard"]]
+    : S.mode === "plg"
+    ? [["Pain point of talented lawyers", P.talentAgreed], ["Pain point of clients and buyers", P.clientAgreed], ["Market gap insight", P.gap]]
+    : [["Team", S.team.name || "Our team"], ["Key insight", S.pitch.key], ["Our idea", S.pitch.idea], ["Why it will work", S.pitch.why], ["Why it matters for the future of law", S.pitch.matter]];
+  let i = 0;
+  const k = h("div", {class: "k"}), v = h("div", {class: "v"});
+  const vw = h("div", {style: "max-width:min(100%,1100px);max-height:55vh;overflow:auto"});
+  const ov = h("div", {class: "present"}, k, v, vw,
+    h("div", {class: "bar"}, h("button", {class: "btn", onclick: () => { i = Math.max(0, i - 1); draw(); }}, "Back"), h("div", {style: "flex:1"}),
+      h("button", {class: "btn", onclick: () => { if (i === steps.length - 1) ov.remove(); else { i++; draw(); } }}, "Next"),
+      h("button", {class: "btn", onclick: () => ov.remove()}, "Close")));
+  function draw(){ k.textContent = steps[i][0]; v.textContent = steps[i][1] || (steps[i][2] ? "" : "(nothing here yet)"); vw.replaceChildren(); if (steps[i][2]) vw.append(sketchView(steps[i][2], "2/1")); }
+  draw(); document.body.append(ov);
+}
+
+/* ---------- Potomac Law Group: market gaps ---------- */
+const WHO = ["Talented lawyers", "In-house lawyers", "Law firm associates", "Law firm partners"];
+
+function rPlgGroup(){
+  const rail = railWrap(0,
+    h("p", {}, "Add the people in your group. Each person gets a color so you can see who wrote what once notes are shared."),
+    h("p", {class: "muted"}, "This is a discussion worksheet: write individually first, then agree as a group."));
+  const members = h("div", {class: "members"}, S.team.members.map((m, i) =>
+    h("div", {class: "member", style: "--c:" + MEMBER_COLORS[i]},
+      h("label", {class: "label"}, "Group member " + (i + 1)),
+      h("input", {class: "input", placeholder: "Name", value: m.name, oninput: e => { m.name = e.target.value; }}),
+      i >= 2 ? h("button", {class: "btn sm quiet", onclick: () => { S.team.members.splice(i, 1); render(); }}, "Remove") : null)));
+  return {rail, work: [members, S.team.members.length < 4 ? h("div", {}, h("button", {class: "btn quiet", onclick: () => { S.team.members.push({name: "", talent: ""}); render(); }}, "Add a person")) : null]};
+}
+
+function plgPart(kind, idx){
+  const P = S.plg, talent = kind === "talent";
+  const stem = talent ? WHO[P.who] + " hate it that…" : "Clients hate it that…";
+  const shownKey = kind + "Shown", pinKey = kind + "Pin", agreedKey = kind + "Agreed";
+  const rail = railWrap(idx);
+  if (talent){
+    rail.push(
+      h("p", {}, "Individually, write down 2–3 ideas that might lead to “market gap” insights to attract, retain and motivate talented lawyers."),
+      h("div", {class: "ask"}, "“Talented lawyers hate it that…” or “…hate it when…”"),
+      h("h3", {}, "Focus on one type of lawyer (optional)"),
+      h("div", {class: "chips"}, WHO.map((w, i) => h("button", {class: "chip", "aria-pressed": String(P.who === i), onclick: () => { P.who = i; render(); }}, w))));
+  } else {
+    rail.push(
+      h("p", {}, "Write down 2–3 ideas that might lead to “market gap” insights about how to serve clients and buyers of legal services more effectively."),
+      h("div", {class: "ask"}, "“Clients hate it that…”"));
+  }
+  rail.push(h("h3", {}, "How this step works"),
+    h("ol", {},
+      h("li", {}, "Write your own ideas first. Notes stay hidden so no one anchors on someone else’s."),
+      h("li", {}, "Reveal them and share in your group."),
+      h("li", {}, "Agree on one serious pain point you’d like to address, and pin it.")));
+  const b = buildBoard({
+    stem, editable: true, focusLabel: "The pain point we all agree we would like to see addressed is:",
+    list: () => P[kind], setList: a => { P[kind] = a; },
+    getText: () => P[agreedKey], setText: v => { P[agreedKey] = v; },
+    isPinned: n => P[pinKey] === n.id,
+    pin: n => { P[pinKey] = n.id; P[agreedKey] = n.text; },
+    onDelete: n => { if (P[pinKey] === n.id){ P[pinKey] = null; P[agreedKey] = ""; } },
+    hidden: () => !P[shownKey]
+  });
+  const bar = h("div", {class: "row", style: "justify-content:space-between"},
+    h("span", {class: "label", style: "margin:0"}, P[shownKey] ? "Sharing: everyone can read the notes" : "Writing individually: notes are hidden"),
+    h("button", {class: "btn sm primary", onclick: () => { P[shownKey] = !P[shownKey]; render(); }}, P[shownKey] ? "Hide notes again" : "Reveal and share"));
+  return {rail, work: [bar, ...b.nodes], after: b.after};
+}
+
+function rPlgSnapshot(){
+  const P = S.plg;
+  const rail = railWrap(3,
+    h("p", {}, "Put the two agreed pain points side by side and look at what connects them."),
+    h("div", {class: "ask"}, "Where do talent and client frustrations meet? What could a firm offer that no one does well today?"));
+  const card = (title, key, ph) => h("div", {class: "board-card"},
+    h("h3", {style: "font-family:var(--serif);margin:0 0 .5rem;font-size:1.3rem"}, title),
+    h("textarea", {class: "input", style: "min-height:9rem", placeholder: ph, value: P[key], oninput: e => { P[key] = e.target.value; }}));
+  return {rail, work: [
+    h("div", {class: "two"}, card("Pain point of talented lawyers", "talentAgreed", "Agree on one in part one"), card("Pain point of clients and buyers", "clientAgreed", "Agree on one in part two")),
+    h("div", {class: "board-card"}, h("p", {class: "label"}, "Market gap insight"),
+      h("textarea", {class: "input", style: "min-height:8rem", placeholder: "Where do the two connect? What’s the gap?", value: P.gap, oninput: e => { P.gap = e.target.value; }}))
+  ]};
+}
+
+function fillPlg(){
+  S = freshState("plg"); const P = S.plg;
+  S.team.members = [{name: "Taylor", talent: ""}, {name: "Jordan", talent: ""}, {name: "Riley", talent: ""}];
+  const mk = (t, i) => ({id: uid(), text: t, author: i % 3, votes: i === 0 ? 2 : 0, x: 18 + (i % 4) * 255, y: 18 + Math.floor(i / 4) * 175 + (i % 2) * 14});
+  P.talent = ["the path to partnership feels opaque and political", "flexibility is offered on paper but counts against them at promotion time", "they spend more time on admin and billing than on the legal work they trained for"].map(mk);
+  P.client = ["they can’t predict what a matter will cost until the bill arrives", "they have to re-explain their business whenever a new lawyer joins the matter", "they get a long memo when they needed a clear recommendation"].map(mk);
+  P.talentPin = P.talent[0].id; P.talentAgreed = P.talent[0].text; P.talentShown = true;
+  P.clientPin = P.client[0].id; P.clientAgreed = P.client[0].text; P.clientShown = true;
+  P.gap = "Both sides want visibility: talent can’t see their path, clients can’t see cost or progress. A firm that makes both transparent could stand out.";
+  S.stage = 0;
+}
+
+/* ---------- Potomac Day 2: pulling it all together ---------- */
+const JANE = {
+  role: "a general counsel of an aircraft manufacturing company, in role 5 years, was a law firm partner prior to this role",
+  line: "Jane, a general counsel of an aircraft manufacturing company, in role 5 years, was a law firm partner prior to this role",
+  pains: ["wants to communicate more effectively with her outside counsel around their use of AI and is concerned about risk", "feels that firms are very inconsistent in how open they are about their use of AI", "is under a lot of pressure from her CEO to cut legal spend and realize AI efficiency gains the way the company’s other business units are doing", "wants to improve her own use and understanding of AI"],
+  needs: ["communicate and work more effectively with outside counsel by understanding how they use AI", "manage AI risk more effectively", "address her CEO’s concerns about cutting legal spend", "improve her own use and understanding of AI"],
+  motives: ["makes her legal department more efficient without increasing risk", "builds her credibility with her CEO", "builds her confidence in using AI"]
+};
+const SAMPLE_POOL = {
+  talent: ["the path to partnership feels opaque and political"],
+  client: ["firms are very inconsistent in how open they are about their use of AI"]
+};
+function MOT(){ return S.mode === "plg2" ? " in a way that " : " in a way that helps them feel "; }
+function stmtText(){ return [S.lead || "[persona]", ", hates it that ", S.focusText || "[pain point]", ", and needs a way to ", S.needs.join("; ") || "[need]", MOT(), S.feelings.join(S.mode === "plg2" ? "; " : ", ") || "[motivator]", "."].join(""); }
+function prefillD2(){ if (S.mode === "plg2" && !S.lead && S.pers.name) S.lead = S.pers.name + (S.pers.role ? ", " + S.pers.role : ""); }
+const lines = t => t.split("\n").map(x => x.trim()).filter(Boolean);
+
+function rD2Focus(){
+  const D = S.d2, P = S.plg;
+  const hasPool = D.pool.talent.length || D.pool.client.length;
+  const top1 = (notes, pin) => [...notes].sort((a, b) => (b.id === pin) - (a.id === pin) || b.votes - a.votes).slice(0, 1).map(n => n.text);
+  const day1 = () => ({talent: top1(P.talent, P.talentPin), client: top1(P.client, P.clientPin)});
+  const load = pool => { D.pool = {talent: pool.talent.slice(0, 1), client: pool.client.slice(0, 1)}; D.drawer = false; render(); };
+  const rail = railWrap("focus",
+    h("p", {}, "These are the two pain points your team chose in the Potomac Law Group case discussion: one about talent and one about clients. Review them as a team and choose the ONE you’d most like to work on today."),
+    h("div", {class: "ask"}, "The pain point we choose is…"),
+    h("p", {class: "muted"}, "Tap a card to select it. You can fine-tune the wording at the bottom."),
+    h("button", {class: "btn sm quiet", onclick: () => { D.drawer = !D.drawer; render(); }}, D.drawer ? "Hide facilitator panel" : "Facilitator: load pain points"));
+  const set = (text, kind) => { if (!S.pers.frust || S.pers.frust === D.chosen) S.pers.frust = text; D.chosen = text; D.kind = kind; S.focusText = text; };
+  const col = (title, kind, who) => h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, title),
+    D.pool[kind].map(t => h("button", {class: "pick", "aria-pressed": String(D.chosen === t), onclick: () => { set(t, kind); render(); }},
+      h("span", {style: "opacity:.7"}, who + " hate it that "), t)));
+  let t1, t2;
+  const drawer = D.drawer ? h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.7rem"},
+    h("h3", {style: "font-family:var(--serif);margin:0;font-size:1.3rem"}, "Load the collected pain points"),
+    h("p", {class: "muted", style: "margin:0"}, "One pain point per category (extra lines are ignored). Write each so it finishes the sentence “…hate it that”."),
+    h("div", {class: "two"},
+      h("div", {}, h("label", {class: "label"}, "Talent pain point"), t1 = h("textarea", {class: "input", style: "min-height:7rem", value: D.pool.talent.join("\n")})),
+      h("div", {}, h("label", {class: "label"}, "Client pain point"), t2 = h("textarea", {class: "input", style: "min-height:7rem", value: D.pool.client.join("\n")}))),
+    h("div", {class: "row"},
+      h("button", {class: "btn primary", onclick: () => load({talent: lines(t1.value), client: lines(t2.value)})}, "Use this list"),
+      h("button", {class: "btn", onclick: () => load(SAMPLE_POOL)}, "Load sample list"),
+      h("button", {class: "btn", onclick: () => { const d = day1(); if (!d.talent.length && !d.client.length) toast("No Day 1 notes on this screen yet"); else load(d); }}, "Use Day 1 top picks from this screen"))) : null;
+  const empty = !hasPool && !D.drawer ? h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.8rem"},
+    h("p", {style: "font-family:var(--serif);font-size:1.4rem;margin:0"}, "No pain points loaded yet."),
+    h("p", {class: "muted", style: "margin:0"}, "Your facilitators load your team’s chosen talent and client pain points here."),
+    h("div", {class: "row"}, h("button", {class: "btn primary", onclick: () => { D.drawer = true; render(); }}, "Paste a list"), h("button", {class: "btn", onclick: () => load(SAMPLE_POOL)}, "Load sample list"))) : null;
+  const cols = hasPool ? h("div", {class: "two"}, col("Talent pain point", "talent", "Talented lawyers"), col("Client pain point", "client", "Clients")) : null;
+  const chosen = h("div", {class: "board-card"}, h("label", {class: "label"}, "The pain point we choose is:"),
+    h("textarea", {class: "input", placeholder: "Tap a card above, or type your own", value: D.chosen, oninput: e => { D.chosen = e.target.value; S.focusText = e.target.value; }}));
+  return {rail, work: [drawer, empty, cols, chosen]};
+}
+
+const ratioNum = r => { const p = String(r).split("/"); return p.length === 2 ? p[0] / p[1] : +r; };
+function fitView(key, ratio, cls){
+  const v = sketchView(key, ratio);
+  v.classList.add("fitbox"); v.style.setProperty("--asp", String(S.padAspect[key] || ratioNum(ratio)));
+  return h("div", {class: "fitwrap" + (cls ? " " + cls : "")}, v);
+}
+/* One-screen summary: end user + great thing on the left, problem + ideas on the right. */
+function shareoutGrid(opts){
+  const withIdeas = !opts || opts.ideas !== false;
+  const lab = t => h("p", {class: "label", style: "margin:.4rem 0 .05rem"}, t);
+  const persona = h("div", {class: "so-card", style: "flex:1 1 0"},
+    h("h3", {style: "margin-bottom:.4rem"}, "Our end user" + (S.pers.name ? ": " + S.pers.name : "")),
+    h("div", {class: "ptop"}, h("div", {class: "pdraw"}, sketchView("drawing", "25/16")), S.pers.role ? h("div", {class: "prole"}, S.pers.role) : null),
+    h("div", {class: "plists"},
+      S.pers.frust ? h("div", {}, lab("Frustrations"), listFrom(S.pers.frust)) : null,
+      S.pers.wants ? h("div", {}, lab("Wants and needs"), listFrom(S.pers.wants)) : null));
+  const great = h("div", {class: "so-card", style: "flex:0 0 auto;overflow:visible"},
+    h("h3", {style: "margin-bottom:.4rem"}, "Our great thing" + (S.analogy ? ": " + S.analogy : "")),
+    S.attrs.length ? h("div", {class: "chips", style: "gap:.35rem"}, S.attrs.map(a => h("span", {class: "chip", style: "min-height:1.6rem;padding:0 .65rem;font-size:.8rem"}, a))) : h("p", {class: "muted", style: "margin:0"}, "No attributes listed yet."));
+  const problem = h("div", {class: "so-card", style: withIdeas ? "" : "flex:1 1 0"},
+    h("h3", {style: "margin-bottom:.3rem"}, "Our problem"),
+    h("p", {style: "margin:0;font-family:var(--serif);font-size:" + (withIdeas ? "1.12rem" : "1.35rem") + ";line-height:1.5"}, stmtText()));
+  const ideas = h("div", {class: "so-card", style: "flex:1 1 0"}, h("h3", {}, "Our ideas"), fitView("whiteboard", "2/1"));
+  return h("div", {class: "so" + (withIdeas ? "" : " lean")}, h("div", {class: "so-col"}, persona, great), h("div", {class: "so-col"}, problem, withIdeas ? ideas : null));
+}
+const CARD_H = "font-family:var(--serif);margin:0 0 .6rem;font-size:1.3rem";
+function listFrom(t){ const L = lines(t || ""); return L.length ? h("ul", {style: "margin:.2rem 0 0;padding-left:1.2rem"}, L.map(x => h("li", {style: "margin:.2rem 0"}, x))) : null; }
+function reviewCards(){
+  const lab = t => h("p", {class: "label", style: "margin:.7rem 0 .1rem"}, t);
+  const persona = h("div", {class: "board-card"},
+    h("h3", {style: CARD_H}, "Our end user" + (S.pers.name ? ": " + S.pers.name : "")),
+    h("div", {style: "max-width:26rem"}, sketchView("drawing", "25/16")),
+    S.pers.role ? h("p", {style: "margin:.7rem 0 0;font-weight:700"}, S.pers.role) : null,
+    S.pers.frust ? [lab("Frustrations"), listFrom(S.pers.frust)] : null,
+    S.pers.wants ? [lab("Wants and needs"), listFrom(S.pers.wants)] : null);
+  const problem = h("div", {class: "board-card"}, h("h3", {style: CARD_H}, "Our problem"),
+    h("p", {style: "margin:0;font-family:var(--serif);font-size:1.15rem;line-height:1.5"}, stmtText()));
+  const attrs = h("div", {class: "board-card"}, h("h3", {style: CARD_H}, "Our great thing" + (S.analogy ? ": " + S.analogy : "")),
+    S.attrs.length ? h("ol", {style: "margin:0;padding-left:1.4rem"}, S.attrs.map(a => h("li", {style: "margin:.25rem 0"}, a))) : h("p", {class: "muted", style: "margin:0"}, "No attributes listed yet."));
+  return h("div", {class: "review"}, h("div", {style: "display:flex;flex-direction:column;gap:1rem"}, persona, attrs), problem);
+}
+
+function rD2Individual(){
+  const rail = railWrap("individual",
+    h("p", {}, "Review your problem statement, your persona and list of attributes. Quietly, take 3-4 minutes individually to come up with at least 3 ideas on your individual brainstorming sheet. Prepare to share with your team."));
+  return {rail, work: [shareoutGrid({ideas: false})]};
+}
+
+function rD2Group(){
+  const banner = h("div", {class: "board-card"},
+    h("p", {class: "phase"}, "Ideation"),
+    h("h2", {style: "font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:0 0 .5rem"}, "Group Brainstorm"),
+    h("p", {style: "font-size:1.2rem;margin:0;line-height:1.45"}, "Have each person share their ideas, recording them on your whiteboard so you can all see them. As a group brainstorm and come up with 3-4 directional ideas for addressing the problem you identified. (Extra credit for creativity and branding!)"));
+  const wb = sketchPad("whiteboard", {fill: true, skin: false, stickies: true});
+  return {rail: [], work: [banner, wb], after: () => wb.__fit()};
+}
+
+function rD2Share(){
+  const head = h("div", {style: "display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap"},
+    h("h2", {style: "font-family:var(--serif);font-size:1.2rem;margin:0"}, "Share-out"),
+    h("span", {class: "muted"}, "Prepare to share: the problem and your end user, the great thing, and your best directional ideas."));
+  return {rail: [], work: [head, shareoutGrid()]};
+}
+
+function sampleCanvas(w, hh, draw){
+  const c = document.createElement("canvas"); c.width = w; c.height = hh;
+  const x = c.getContext("2d"); x.lineCap = "round"; x.lineJoin = "round"; draw(x);
+  return c.toDataURL();
+}
+function sampleDrawing(look){
+  look = Object.assign({skin: "#d9a066", shirt: "#2563c4", bubble: "AI risk?", bubbleColor: "#c62828"}, look || {});
+  return sampleCanvas(1000, 640, x => {
+    x.lineWidth = 7; x.strokeStyle = look.shirt;
+    [[500, 250, 500, 430], [500, 300, 415, 375], [500, 300, 585, 365], [500, 430, 440, 570], [500, 430, 565, 570]].forEach(l => { x.beginPath(); x.moveTo(l[0], l[1]); x.lineTo(l[2], l[3]); x.stroke(); });
+    x.fillStyle = look.skin; x.strokeStyle = "#1f1c1b"; x.beginPath(); x.arc(500, 175, 72, 0, 6.3); x.fill(); x.stroke();
+    x.beginPath(); x.arc(500, 195, 30, 0.25, Math.PI - 0.25); x.stroke();
+    x.fillStyle = "#1f1c1b"; [[475, 160], [525, 160]].forEach(p => { x.beginPath(); x.arc(p[0], p[1], 6, 0, 6.3); x.fill(); });
+    x.fillStyle = "#7a5230"; x.fillRect(560, 360, 100, 70);
+    x.fillStyle = "#fff"; x.strokeStyle = "#8a8580"; x.lineWidth = 5; x.beginPath(); x.ellipse(730, 110, 125, 55, 0, 0, 6.3); x.fill(); x.stroke();
+    x.fillStyle = look.bubbleColor; x.font = "bold 52px sans-serif"; x.textAlign = "center"; x.fillText(look.bubble, 730, 126);
+  });
+}
+function sampleBoard(items){
+  items = items || [["1. AI Tracker", "see which AI tools were used, and when", "#a51c30"], ["2. Clear Skies", "one scorecard every firm fills out", "#2563c4"], ["3. Autopilot, With Pilots", "pre-approved workflows with guardrails", "#4b7f3a"]];
+  return sampleCanvas(1800, 700, x => {
+    x.textAlign = "left";
+    items.forEach((it, i) => {
+      const y = 90 + i * 170;
+      x.font = 'bold 70px "Segoe Print","Comic Sans MS","Bradley Hand",cursive'; x.fillStyle = it[2]; x.fillText(it[0], 90, y);
+      x.strokeStyle = it[2]; x.lineWidth = 6; x.beginPath(); x.moveTo(90, y + 16); x.lineTo(90 + x.measureText(it[0]).width, y + 16); x.stroke();
+      x.font = '42px "Segoe Print","Comic Sans MS",cursive'; x.fillStyle = "#1f1c1b"; x.fillText(it[1], 130, y + 60);
+    });
+  });
+}
+
+function fillD2(){
+  S = freshState("plg2"); const D = S.d2;
+  S.team.name = "The Gap Year Abroad";
+  S.team.members = [{name: "Taylor", talent: "Draws on every napkin"}, {name: "Jordan", talent: "Listens to a lot of podcasts"}, {name: "Riley", talent: "Spreadsheet whisperer"}, {name: "Morgan", talent: "Brings the snacks"}];
+  D.pool = {talent: [...SAMPLE_POOL.talent], client: [...SAMPLE_POOL.client]};
+  D.kind = "client"; D.chosen = D.pool.client[0]; S.focusText = D.chosen;
+  S.pers = {name: "Jane", role: JANE.role, tenure: "", frust: JANE.pains.join("\n"), wants: JANE.needs.join("\n")};
+  S.lead = JANE.line;
+  S.needOpts = [...JANE.needs]; S.feelOpts = [...JANE.motives];
+  S.needs = [JANE.needs[0], JANE.needs[1]]; S.feelings = [JANE.motives[0]];
+  S.analogy = "Uber Eats"; S.analogyKey = "Uber Eats"; S.attrs = [ATTRS["Uber Eats"][0], ATTRS["Uber Eats"][2], ATTRS["Uber Eats"][4]];
+  S.drawing = sampleDrawing(); S.padAspect.drawing = 1000 / 640;
+  S.whiteboard = sampleBoard(); S.padAspect.whiteboard = 1800 / 700;
+  S.stickies.whiteboard = [{id: uid(), text: "Pilot with her top two firms first", color: 0, x: 0.66, y: 0.1}, {id: uid(), text: "She needs a CEO-friendly one-pager", color: 1, x: 0.66, y: 0.42}];
+  S.stage = 0;
+}
+
+/* ---------- Facilitator (admin) demo: #admin ---------- */
+const T_ = ["the path to partnership feels opaque and political", "flexibility is offered on paper but counts against them at promotion time", "they spend more time on admin and billing than on the legal work they trained for", "there’s no real mentorship once you’re past year three", "they can’t see how their work connects to the firm’s strategy", "feedback comes once a year, long after it could help"];
+const C_ = ["firms are very inconsistent in how open they are about their use of AI", "they can’t predict what a matter will cost until the bill arrives", "they re-explain their business every time a new lawyer joins the matter", "they get a long memo when they needed a clear recommendation", "they can’t tell how a matter is going without asking", "every firm bills and staffs differently, so comparing is hard"];
+const DEMO = [
+  {team: "The Gap Year Abroad", step: 7, talent: T_[3], client: C_[0], chosen: "client",
+   persona: {name: "Jane", role: JANE.role, frust: JANE.pains, wants: JANE.needs}, lead: JANE.line, needs: [JANE.needs[0], JANE.needs[1]], motives: [JANE.motives[0]],
+   analogy: "Uber Eats", attrs: ["Live order tracking", "Ratings you can trust", "Reorder in two taps", "Delivered to wherever you are", "Huge choice in one place", "Price is clear up front"],
+   look: {skin: "#d9a066", shirt: "#2563c4", bubble: "AI risk?"},
+   board: [["1. AI Tracker", "see which AI tools were used, and when", "#a51c30"], ["2. Clear Skies", "one scorecard every firm fills out", "#2563c4"], ["3. Autopilot, With Pilots", "pre-approved workflows with guardrails", "#4b7f3a"]],
+   notes: ["Pilot with her top two firms first", "She needs a CEO-friendly one-pager"]},
+  {team: "Res Ipsa No-Quitters", step: 7, talent: T_[0], client: C_[3], chosen: "talent",
+   persona: {name: "Maya", role: "a mid-level associate, 5 years at the firm, hoping to make partner", frust: ["wants to know what it really takes to make partner", "hears a different answer from every partner", "sees promotions that seem to depend on who you know"], wants: ["see exactly what it takes to make partner", "get honest, regular feedback", "know decisions aren’t made on politics"]},
+   lead: "Maya, a mid-level associate, 5 years at the firm, hoping to make partner", needs: ["see exactly what it takes to make partner", "get honest, regular feedback on her progress"], motives: ["builds her confidence about where she stands", "keeps her motivated to stay"],
+   analogy: "Netflix", attrs: ["Personalized suggestions", "Pick up where you left off", "Low commitment, cancel anytime", "Watch anywhere", "Series you can binge", "Ratings from people like you"],
+   look: {skin: "#8a5a3c", shirt: "#7a3fa0", bubble: "Partner?"},
+   board: [["1. Next Up", "a profile with your next three milestones", "#7a3fa0"], ["2. Pick-Up Point", "check-ins that start from last time", "#1f8a8a"], ["3. Trial Run", "one-month rotations into a partner’s practice", "#e8710a"]],
+   notes: ["Ask the committee to publish the criteria", "Pilot with the fifth-year class"]},
+  {team: "Clause Encounters of the Legal Kind", step: 7, talent: T_[2], client: C_[1], chosen: "client",
+   persona: {name: "Dev", role: "a VP of operations who buys legal services for a logistics company, 3 years in role", frust: ["can’t predict what a matter will cost until the bill arrives", "has to defend surprise invoices to his CFO", "can’t compare firms on price"], wants: ["know the cost up front", "get simple, regular updates", "compare firms fairly"]},
+   lead: "Dev, a VP of operations who buys legal services for a logistics company, 3 years in role", needs: ["know what a matter will cost up front", "track progress without chasing anyone"], motives: ["gives him confidence with his CFO"],
+   analogy: "Amazon Prime", attrs: ["Fast, predictable delivery", "One-click ordering", "Perks bundled into one membership", "Personalized recommendations", "Easy returns, no questions", "Feels like the company has your back"],
+   look: {skin: "#f1c9a5", shirt: "#c62828", bubble: "How much?"},
+   board: [["1. Flat-Fee Prime", "one annual fee for routine work", "#c62828"], ["2. Track My Matter", "live status like a package tracker", "#2563c4"], ["3. One-Click Rerun", "reorder last year’s contract in minutes", "#4b7f3a"]],
+   notes: ["Start with NDAs and renewals", "Show the price before the work starts"]},
+  {team: "Billable Hulks", step: 6, talent: T_[1], client: C_[4], chosen: "talent",
+   persona: {name: "Priya", role: "a senior associate and parent of two, 7 years at the firm", frust: ["flexibility is offered but counts against her at promotion time", "feels she has to be always on to be taken seriously"], wants: ["be judged on results, not face time", "know flexibility won’t cost her partnership"]},
+   lead: "Priya, a senior associate and parent of two, 7 years at the firm", needs: ["be judged on results, not face time"], motives: ["makes her feel valued"],
+   analogy: "ChatGPT", attrs: ["Ask in plain language", "Instant first draft", "Iterate by conversation", "Anyone can use it", "Remembers context", "Works any time"],
+   look: {skin: "#b87a4b", shirt: "#1f8a8a", bubble: "Flex?"},
+   board: [["1. Ask Anything", "a plain-language path to partner", "#1f8a8a"]], notes: ["Publish how flexibility is counted"]},
+  {team: "The Briefs Encounters", step: 4, talent: T_[4], client: C_[2], chosen: "client",
+   persona: {name: "Sam", role: "a general counsel at a regional hospital system, 2 years in role", frust: ["re-explains the business to every new lawyer", "pays for the same learning curve again and again"], wants: ["one team that already knows the business"]},
+   lead: "Sam, a general counsel at a regional hospital system, 2 years in role", needs: ["stop re-explaining the business"], motives: [],
+   analogy: "Uber Eats", attrs: ["Reorder in two taps", "Live order tracking", "Ratings you can trust"],
+   look: {skin: "#fbe3d0", shirt: "#e8710a", bubble: "Again?"}},
+  {team: "", step: 1, talent: T_[5], client: C_[5], chosen: null}
+];
+let A = null;
+function newGroup(){ return {id: Math.max(0, ...A.groups.map(g => g.id)) + 1, key: "", team: "", step: 0, talent: "", client: "", chosen: null, _st: null}; }
+function seedAdmin(){
+  if (LIVE){ A = {live: true, groups: [], present: null, linkOpen: null, confirm: null, pin: getPin(), locked: !getPin(), msg: "", loading: false, dirty: new Set(), saved: ""}; if (!A.locked) adminLoad(); return; }
+  A = {groups: DEMO.map((g, i) => ({...g, id: i + 1, _st: null})), present: null, linkOpen: null, confirm: null};
+}
+
+/* Builds a group's full state from its (simulated) progress so the real Share-out views can render it. */
+function groupState(g){
+  if (g._st) return g._st;
+  if (A && A.live) return freshState("plg2");
+  const st = freshState("plg2"), D = st.d2;
+  st.team.name = g.team || "";
+  D.pool = {talent: g.talent ? [g.talent] : [], client: g.client ? [g.client] : []};
+  if (g.chosen && g[g.chosen]){ D.kind = g.chosen; D.chosen = g[g.chosen]; st.focusText = D.chosen; }
+  const p = g.persona;
+  if (p && g.step >= 3){ st.pers = {name: p.name, role: p.role, tenure: "", frust: p.frust.join("\n"), wants: p.wants.join("\n")}; st.drawing = sampleDrawing(g.look); st.padAspect.drawing = 1000 / 640; }
+  if (p && g.step >= 4){ st.lead = g.lead; st.needs = [...g.needs]; st.feelings = [...g.motives]; }
+  if (g.analogy && g.step >= 5){ st.analogy = g.analogy; st.analogyKey = g.analogy; st.attrs = g.attrs.slice(0, g.step >= 6 ? 6 : 3); }
+  if (g.board && g.step >= 6){
+    const full = g.step >= 7;
+    st.whiteboard = sampleBoard(full ? g.board : g.board.slice(0, 1)); st.padAspect.whiteboard = 1800 / 700;
+    st.stickies.whiteboard = (g.notes || []).slice(0, full ? 2 : 1).map((t, i) => ({id: uid(), text: t, color: i, x: 0.66, y: 0.1 + i * 0.32}));
+  }
+  g._st = st; return st;
+}
+const groupLink = g => {
+  const base = location.href.split("#")[0];
+  return A && A.live ? base + "#g=" + g.id + "&k=" + g.key : base + "#" + new URLSearchParams({g: String(g.id), t: g.talent, c: g.client}).toString();
+};
+async function copyText(t, inp){ try { await navigator.clipboard.writeText(t); toast("Link copied"); } catch (e){ inp.focus(); inp.select(); toast("Select the link and copy it"); } }
+
+function renderAdmin(){
+  let el = document.getElementById("admin");
+  if (!el){ el = h("div", {id: "admin", class: "adm"}); document.body.append(el); }
+  el.style.display = "flex";
+  el.replaceChildren(...(A.live && A.locked ? adminLock() : A.present != null ? adminPresent() : adminList()));
+}
+function adminList(){
+  const stages = STAGES_BY.plg2;
+  const top = h("header", {class: "top"},
+    h("div", {}, h("h1", {}, "Facilitator view"), h("div", {class: "sub", id: "adm-sub"}, A.live ? "Potomac Law Group · Day 2 · live" + (A.saved ? " · " + A.saved : "") : "Potomac Law Group · Day 2 · demo with simulated groups")),
+    h("div", {class: "spacer"}),
+    h("button", {class: "tbtn", onclick: async () => { A.groups.push(newGroup()); renderAdmin(); if (A.live){ await saveConfig(); renderAdmin(); } }}, "Add group"),
+    A.live ? h("button", {class: "tbtn", onclick: () => adminPoll(true)}, "Refresh") : h("button", {class: "tbtn", onclick: () => { seedAdmin(); renderAdmin(); toast("Demo reset"); }}, "Reset demo"),
+    h("button", {class: "tbtn", onclick: () => { location.hash = ""; route(); }}, "Group view"));
+  const cards = A.groups.map(g => {
+    const done = g.step >= 7, cs = g.cur != null ? g.cur : g.step;
+    const pain = (kind, label) => h("div", {},
+      h("label", {class: "label"}, label, g.chosen === kind ? h("span", {class: "tag2"}, "chosen by the team") : null),
+      h("input", {class: "input", placeholder: "Day 1 pick for this group", value: g[kind], oninput: e => { g[kind] = e.target.value; g._st = null; if (A.live){ A.dirty.add(g.id); saveConfigSoon(); } }}));
+    const url = groupLink(g);
+    const linkRow = A.linkOpen === g.id ? h("div", {class: "row"},
+      h("input", {class: "input", readonly: true, value: url, style: "flex:1;min-width:16rem", onfocus: e => e.target.select()}),
+      h("button", {class: "btn primary", onclick: e => copyText(url, e.currentTarget.previousSibling)}, "Copy link")) : null;
+    return h("div", {class: "gcard"},
+      h("div", {class: "grow"},
+        h("div", {}, h("div", {class: "gnum"}, String(g.id)), h("div", {class: "muted"}, "Group")),
+        h("div", {style: "display:flex;flex-direction:column;gap:.6rem"}, pain("talent", "Talent pain point"), pain("client", "Client pain point")),
+        h("div", {},
+          h("div", {class: "tname"}, g.team || "Not named yet"),
+          h("div", {class: "pips"}, stages.map((s, i) => h("span", {class: "pip" + (i < g.step ? " on" : "") + (i === cs ? " cur" : ""), title: s.title}))),
+          h("div", {class: "muted"}, done ? "Has reached Share-out: ready to present" : "Working on: " + stages[cs].title + " (" + (cs + 1) + " of " + stages.length + ")"),
+          A.live ? h("div", {class: "muted", style: "font-size:.85rem;margin-top:.2rem"}, g.updatedAt ? "Last saved " + new Date(g.updatedAt).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"}) : "No activity yet") : null),
+        h("div", {class: "gacts"},
+          h("button", {class: "btn" + (done ? " primary" : ""), onclick: () => setPresent(g.id)}, done ? "Present" : "Preview"),
+          h("button", {class: "btn sm", onclick: () => { A.linkOpen = A.linkOpen === g.id ? null : g.id; renderAdmin(); }}, "Group link"),
+          h("button", {class: "btn sm quiet", onclick: () => {
+            if (A.confirm === g.id){ A.groups = A.groups.filter(x => x !== g); A.confirm = null; renderAdmin(); if (A.live) saveConfig(); }
+            else { A.confirm = g.id; renderAdmin(); setTimeout(() => { if (A.confirm === g.id){ A.confirm = null; if (!A.present) renderAdmin(); } }, 3000); }
+          }}, A.confirm === g.id ? "Tap again to remove" : "Remove"))),
+      linkRow);
+  });
+  const body = h("div", {class: "body"},
+    h("div", {class: "banner", style: "font-family:var(--sans);font-size:1.05rem"}, "Enter each group’s two Day 1 pain points, send each Hub its group link, then tap Present to put that group’s Share-out on the front-of-room screen. " + (A.live ? "This screen refreshes on its own every few seconds." : "Progress and boards on this demo are simulated.")),
+    cards);
+  return [top, body];
+}
+function adminPresent(){
+  const g = A.groups.find(x => x.id === A.present), i = A.groups.indexOf(g);
+  const st = groupState(g), stage = STAGES_BY.plg2[g.cur != null ? g.cur : g.step];
+  const step = d => setPresent(A.groups[(i + d + A.groups.length) % A.groups.length].id);
+  const top = h("header", {class: "top"},
+    h("button", {class: "tbtn", onclick: () => { A.present = null; A.loading = false; renderAdmin(); }}, "Back to groups"),
+    h("div", {class: "spacer"}),
+    h("button", {class: "tbtn", "aria-label": "Previous group", onclick: () => step(-1)}, "◀"),
+    h("h1", {style: "font-size:1.8rem;text-align:center"}, "Group " + g.id + (g.team ? " · " + g.team : "")),
+    h("button", {class: "tbtn", "aria-label": "Next group", onclick: () => step(1)}, "▶"),
+    h("div", {class: "spacer"}));
+  const kind = st.d2.kind === "client" ? "Clients" : "Talented lawyers";
+  const prev = S; S = st;
+  let grid;
+  try { grid = shareoutGrid(); } finally { S = prev; }
+  const body = h("div", {class: "body"},
+    A.loading ? h("div", {class: "banner", style: "font-family:var(--sans);font-size:1.05rem"}, "Loading this group’s work…") : null,
+    g.step < 7 ? h("div", {class: "banner", style: "font-family:var(--sans);font-size:1.05rem"}, "This group is still working on “" + stage.title + "”. Showing what they have so far.") : null,
+    st.d2.chosen ? h("div", {class: "banner"}, "Pain point we chose: " + kind + " hate it that " + st.d2.chosen) : null,
+    grid);
+  return [top, body];
+}
+document.addEventListener("keydown", e => {
+  if (!A || A.present == null || document.getElementById("admin")?.style.display !== "flex") return;
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft"){ const i = A.groups.findIndex(x => x.id === A.present), d = e.key === "ArrowRight" ? 1 : -1; setPresent(A.groups[(i + d + A.groups.length) % A.groups.length].id); }
+});
+
+/* ---------- LIVE MODE: real storage through /api (Netlify Function + Netlify Blobs) ----------
+   If /api/ping answers, the page runs live: groups save their work as they go and the
+   facilitator view reads it. If it doesn't answer (Claude preview, a file on your computer),
+   everything keeps working as the local demo. */
+let LIVE = false;
+const LV = {on: false, id: null, key: null, last: "", imgSent: {drawing: "", whiteboard: ""}, busy: false, blocked: false};
+const LIVE_KEYS = ["team", "personaId", "focusText", "pers", "lead", "needOpts", "feelOpts", "needs", "feelings", "analogy", "analogyKey", "attrs", "attrSlots", "attrStore", "otherName", "stickies", "shapes", "padAspect", "stage", "maxStage", "imgRev", "groupNo"];
+async function api(method, path, body, opts){
+  opts = opts || {};
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), opts.timeout || 15000);
+  try {
+    const headers = {"content-type": "application/json"};
+    if (opts.pin) headers["x-admin-pin"] = opts.pin;
+    const r = await fetch(path, {method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: ctl.signal, cache: "no-store"});
+    let data = null; try { data = await r.json(); } catch (e) {}
+    if (!r.ok){ const e = new Error((data && data.error) || ("HTTP " + r.status)); e.status = r.status; throw e; }
+    return data;
+  } finally { clearTimeout(t); }
+}
+const getPin = () => { try { return sessionStorage.getItem("fpin") || ""; } catch (e) { return ""; } };
+const setPin = v => { try { sessionStorage.setItem("fpin", v); } catch (e) {} };
+function liveSnapshot(){
+  const o = {}; LIVE_KEYS.forEach(k => { o[k] = S[k]; });
+  o.d2 = {chosen: S.d2.chosen, kind: S.d2.kind};
+  return o;
+}
+function applySnapshot(st, snap){
+  LIVE_KEYS.forEach(k => { if (snap[k] !== undefined && snap[k] !== null) st[k] = snap[k]; });
+  if (snap.d2){ st.d2.chosen = snap.d2.chosen || ""; st.d2.kind = snap.d2.kind || ""; }
+  st.shapes = Object.assign({drawing: [], drawing2: [], whiteboard: []}, st.shapes);
+  st.stickies = Object.assign({whiteboard: []}, st.stickies);
+  st.padAspect = st.padAspect || {}; st.imgRev = st.imgRev || {}; st.attrStore = st.attrStore || {};
+}
+function setStatus(kind){
+  const el = document.querySelector(".nav .note-s"); if (!el || !LV.on) return;
+  const t = new Date().toLocaleTimeString([], {hour: "numeric", minute: "2-digit", second: "2-digit"});
+  el.textContent = "Group " + LV.id + " · " + (kind === "saved" ? "Saved ✓ " + t : kind === "saving" ? "Saving…" : "Can’t reach the server. Your work stays on this screen and will save when the connection returns.");
+}
+async function liveTick(){
+  if (!LV.on || LV.busy) return;
+  LV.busy = true;
+  try {
+    const snapNow = JSON.stringify(liveSnapshot());
+    const imgChanged = ["drawing", "whiteboard"].some(n => (S[n] || "") !== LV.imgSent[n]);
+    if (snapNow === LV.last && !imgChanged){ LV.busy = false; return; }
+    setStatus("saving");
+    for (const n of ["drawing", "whiteboard"]){
+      const v = S[n] || "";
+      if (v !== LV.imgSent[n]){
+        await api("PUT", "/api/groups/" + LV.id + "/img/" + n + "?k=" + encodeURIComponent(LV.key), {data: v});
+        LV.imgSent[n] = v; S.imgRev[n] = (S.imgRev[n] || 0) + 1;
+      }
+    }
+    const snap = JSON.stringify(liveSnapshot());
+    await api("PUT", "/api/groups/" + LV.id + "/state?k=" + encodeURIComponent(LV.key), JSON.parse(snap));
+    LV.last = snap; setStatus("saved");
+  } catch (e){ setStatus("offline"); }
+  finally { LV.busy = false; }
+}
+setInterval(liveTick, 3000);
+document.addEventListener("visibilitychange", () => { if (document.hidden) liveTick(); });
+function showBlock(msg){
+  const el = h("div", {class: "present", style: "background:var(--ink);color:var(--bg);align-items:flex-start"},
+    h("div", {class: "v", style: "font-size:clamp(1.6rem,3vw,2.6rem)"}, msg),
+    h("div", {class: "bar", style: "position:static"}, h("button", {class: "btn", onclick: () => el.remove()}, "Continue without saving (demo)")));
+  document.body.append(el);
+}
+async function initLive(){
+  try { const r = await api("GET", "/api/ping", undefined, {timeout: 2500}); LIVE = !!(r && r.ok); } catch (e){ LIVE = false; }
+  if (!LIVE) return;
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (location.hash === "#admin") return;
+  const g = p.get("g"), k = p.get("k");
+  if (!g || !k){ LV.blocked = true; showBlock("Open the link your facilitator gave your group. This page needs your group’s own link to save your work."); return; }
+  try {
+    const d = await api("GET", "/api/groups/" + encodeURIComponent(g) + "?k=" + encodeURIComponent(k));
+    S.groupNo = g;
+    if (d.state) applySnapshot(S, d.state);
+    S.d2.pool = {talent: d.setup.talent ? [d.setup.talent] : [], client: d.setup.client ? [d.setup.client] : []};
+    for (const n of ["drawing", "whiteboard"]){
+      try { const im = await api("GET", "/api/groups/" + encodeURIComponent(g) + "/img/" + n + "?k=" + encodeURIComponent(k)); S[n] = im.data || null; } catch (e) {}
+      LV.imgSent[n] = S[n] || "";
+    }
+    LV.id = g; LV.key = k; LV.on = true; LV.last = JSON.stringify(liveSnapshot());
+    ["#b-sample", "#b-reset"].forEach(sel => { const b = document.querySelector(sel); if (b) b.style.display = "none"; });
+    setTimer(STG()[S.stage].mins);
+    setStatus("saved");
+  } catch (e){
+    showBlock(e.status === 403 ? "This group link isn’t valid. Ask your facilitator for the right link." : "Couldn’t reach the workshop server. Check your connection and reload.");
+  }
+}
+
+/* Facilitator (live) */
+const adminInputFocused = () => { const a = document.activeElement; return !!(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA") && document.getElementById("admin")?.contains(a)); };
+function mergeAdminList(list){
+  const byId = new Map(A.groups.map(g => [g.id, g]));
+  A.groups = list.map(x => {
+    const old = byId.get(x.id) || {}, st = x.state || {};
+    Object.assign(old, {id: x.id, key: x.key, team: st.team || "", step: st.maxStage || 0, cur: st.stage || 0, chosen: st.kind || null, updatedAt: st.updatedAt || 0});
+    if (!A.dirty.has(x.id)){ old.talent = x.talent; old.client = x.client; }
+    return old;
+  });
+}
+async function adminLoad(){
+  try {
+    const d = await api("GET", "/api/admin/groups", undefined, {pin: A.pin});
+    A.locked = false; A.msg = ""; mergeAdminList(d.groups); renderAdmin();
+  } catch (e){
+    if (e.status === 401){ A.locked = true; A.pin = ""; setPin(""); A.msg = "That PIN didn’t work. Try again."; }
+    else { A.msg = e.message; }
+    renderAdmin();
+  }
+}
+async function adminPoll(force){
+  if (!A || !A.live || A.locked) return;
+  try {
+    const sig = () => JSON.stringify(A.groups.map(g => [g.id, g.team, g.step, g.cur, g.chosen, g.updatedAt, g.talent, g.client, g.key]));
+    const d = await api("GET", "/api/admin/groups", undefined, {pin: A.pin});
+    const before = sig(); mergeAdminList(d.groups); A.msg = "";
+    if (before === sig() && !force) return;
+    if (A.present != null){
+      const g = A.groups.find(x => x.id === A.present);
+      if (g && g._upd !== g.updatedAt){ try { await loadFull(g); } catch (e) {} }
+      renderAdmin();
+    } else if (force || !adminInputFocused()) renderAdmin();
+  } catch (e){ if (e.status === 401){ A.locked = true; renderAdmin(); } }
+}
+async function loadFull(g){
+  const d = await api("GET", "/api/admin/groups/" + g.id, undefined, {pin: A.pin});
+  const st = freshState("plg2");
+  if (d.state) applySnapshot(st, d.state);
+  st.d2.pool = {talent: d.setup.talent ? [d.setup.talent] : [], client: d.setup.client ? [d.setup.client] : []};
+  st.drawing = d.drawing || null; st.whiteboard = d.whiteboard || null;
+  g._st = st; g._upd = g.updatedAt;
+}
+function setPresent(id){
+  A.present = id;
+  const g = A.groups.find(x => x.id === id);
+  if (A.live && g){
+    A.loading = true; renderAdmin();
+    loadFull(g).catch(e => { A.msg = e.message; }).then(() => { A.loading = false; if (A.present === id) renderAdmin(); });
+  } else renderAdmin();
+}
+function saveConfigSoon(){ clearTimeout(A._t); A._t = setTimeout(saveConfig, 900); }
+async function saveConfig(){
+  try {
+    const d = await api("PUT", "/api/admin/config", {groups: A.groups.map(g => ({id: g.id, key: g.key, talent: g.talent, client: g.client}))}, {pin: A.pin});
+    d.groups.forEach(x => { const g = A.groups.find(y => y.id === x.id); if (g) g.key = x.key; });
+    A.dirty = new Set(); A.msg = "";
+    A.saved = "Setup saved " + new Date().toLocaleTimeString([], {hour: "numeric", minute: "2-digit", second: "2-digit"});
+    const sub = document.getElementById("adm-sub"); if (sub) sub.textContent = "Potomac Law Group · Day 2 · live · " + A.saved;
+  } catch (e){ A.msg = "Couldn’t save the setup: " + e.message; const sub = document.getElementById("adm-sub"); if (sub) sub.textContent = A.msg; }
+}
+function adminLock(){
+  const unlock = () => { A.pin = inp.value.trim(); if (!A.pin) return; setPin(A.pin); A.locked = false; A.msg = ""; adminLoad(); };
+  const inp = h("input", {class: "input", type: "password", placeholder: "Facilitator PIN", style: "max-width:22rem", onkeydown: e => { if (e.key === "Enter") unlock(); }});
+  const top = h("header", {class: "top"}, h("div", {}, h("h1", {}, "Facilitator view"), h("div", {class: "sub"}, "Potomac Law Group · Day 2")), h("div", {class: "spacer"}),
+    h("button", {class: "tbtn", onclick: () => { location.hash = ""; route(); }}, "Group view"));
+  const body = h("div", {class: "body"}, h("div", {class: "gcard", style: "max-width:34rem;margin:3rem auto;gap:1rem"},
+    h("h3", {style: CARD_H}, "Facilitator sign-in"),
+    h("p", {class: "muted", style: "margin:0"}, "Enter the PIN you set as ADMIN_PIN in Netlify."),
+    inp, h("div", {class: "row"}, h("button", {class: "btn primary", onclick: unlock}, "Unlock")),
+    A.msg ? h("p", {style: "margin:0;color:var(--brand-text);font-weight:700"}, A.msg) : null));
+  return [top, body];
+}
+setInterval(() => { if (A && A.live && !A.locked && document.getElementById("admin")?.style.display === "flex") adminPoll(false); }, 6000);
+
+/* Group links carry the group number and that group's two pain points: #g=3&t=...&c=... */
+function applyGroupHash(){
+  const hs = location.hash.slice(1);
+  if (!hs || hs === "admin") return;
+  const p = new URLSearchParams(hs);
+  if (!p.get("g")) return;
+  S.groupNo = p.get("g");
+  const t = p.get("t") || "", c = p.get("c") || "";
+  S.d2.pool = {talent: t ? [t] : [], client: c ? [c] : []};
+}
+function route(){
+  const adm = location.hash === "#admin";
+  document.querySelector(".app").style.display = adm ? "none" : "";
+  const el = document.getElementById("admin");
+  if (adm){ if (!A) seedAdmin(); renderAdmin(); }
+  else if (el && el.style.display !== "none"){ el.style.display = "none"; applyGroupHash(); render(); }
+}
+
+/* ---------- boot ---------- */
+/* Prototype focus: only Potomac Day 2 is shown.
+   Other cases (bob, omv, plg = Day 1) are still defined above (CASES / STAGES_BY).
+   To bring them back: set SHOW_CASE_SWITCHER = true. */
+const SHOW_CASE_SWITCHER = false;
+const DEFAULT_MODE = "plg2";
+S = freshState(DEFAULT_MODE);
+setTimer(STG()[0].mins);
+if (!SHOW_CASE_SWITCHER) document.querySelector(".seg").style.display = "none";
+applyGroupHash();
+window.addEventListener("hashchange", route);
+document.querySelector(".app").style.visibility = "hidden";
+initLive().then(() => { document.querySelector(".app").style.visibility = ""; render(); route(); });
+</script>
+</body>
+</html>
