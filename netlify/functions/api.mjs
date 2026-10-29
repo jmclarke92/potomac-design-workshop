@@ -5,6 +5,8 @@
 //   GET  /api/admin/groups               facilitator: list groups + progress     (x-admin-pin header)
 //   PUT  /api/admin/config               facilitator: save group setup           (x-admin-pin header)
 //   GET  /api/admin/groups/:id           facilitator: one group, with drawings   (x-admin-pin header)
+//   DELETE /api/admin/groups/:id         facilitator: remove a group AND its saved work (x-admin-pin header)
+//   POST /api/admin/reset                facilitator: erase everything (new session)    (x-admin-pin header)
 //   GET  /api/groups/:id?k=KEY           group: setup + saved work               (group key)
 //   PUT  /api/groups/:id/state?k=KEY     group: save work                        (group key)
 //   GET  /api/groups/:id/img/:name?k=KEY group: saved drawing / whiteboard       (group key)
@@ -38,6 +40,7 @@ const summary = (st) =>
         team: st.team && st.team.name ? String(st.team.name).slice(0, 120) : "",
         stage: Number(st.stage) || 0,
         maxStage: Number(st.maxStage) || 0,
+        members: ((st.team && st.team.members) || []).map((m) => String((m && m.name) || "").trim().slice(0, 40)).filter(Boolean).slice(0, 8),
         kind: st.d2 && st.d2.kind ? st.d2.kind : "",
         chosen: st.d2 && st.d2.chosen ? String(st.d2.chosen).slice(0, 400) : "",
         updatedAt: st.updatedAt || 0,
@@ -100,6 +103,20 @@ export default async (req) => {
         s.get(`img/${g.id}/whiteboard`, { type: "text" }),
       ]);
       return json({ setup: { talent: g.talent, client: g.client }, state, drawing: drawing || "", whiteboard: whiteboard || "" });
+    }
+    if (parts[1] === "groups" && parts.length === 3 && method === "DELETE" && isId(parts[2])) {
+      const id = parts[2];
+      const cfg = await readConfig(s);
+      cfg.groups = cfg.groups.filter((x) => String(x.id) !== id);
+      await s.setJSON("config", { ...cfg, updatedAt: Date.now() });
+      await Promise.all([s.delete(`group/${id}`), s.delete(`img/${id}/drawing`), s.delete(`img/${id}/whiteboard`)]);
+      return json({ ok: true });
+    }
+
+    if (parts[1] === "reset" && parts.length === 2 && method === "POST") {
+      await s.deleteAll();
+      await s.setJSON("config", { groups: [], updatedAt: Date.now() });
+      return json({ ok: true });
     }
     return fail(404, "Not found.");
   }
