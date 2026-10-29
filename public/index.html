@@ -32,15 +32,16 @@
   --s0:#5c5220; --s1:#1f4a5c; --s2:#2f5427; --s3:#5e4020; --sticky-ink:#f5efe3; --ok:#6fcf8a;
 }
 *,*::before,*::after{box-sizing:inherit}
-html{font-size:clamp(15px,1.08vw,24px);height:100%}
-html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.4;-webkit-tap-highlight-color:transparent;overflow:hidden}
+html{font-size:clamp(15px,1.08vw,24px)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.4;-webkit-tap-highlight-color:transparent;min-height:100vh}
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;touch-action:manipulation}
-.app{display:flex;flex-direction:column;height:100%}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.chrome{position:sticky;top:0;z-index:30}
 
 /* header */
-.top{display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;background:var(--brand);color:#fff;flex-wrap:wrap}
+.top{display:flex;align-items:center;gap:1rem;padding:.45rem 1.25rem;background:var(--brand);color:#fff;flex-wrap:wrap}
 .top h1{font-family:var(--serif);font-size:1.45rem;margin:0;font-weight:700;letter-spacing:.005em}
 .top .sub{font-size:.9rem;opacity:.85}
 .top .spacer{flex:1}
@@ -49,14 +50,14 @@ button{cursor:pointer;touch-action:manipulation}
 .seg button[aria-pressed="true"]{background:#fff;color:#7d1424;opacity:1}
 .tbtn{border:2px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:.8rem;min-height:2.9rem;padding:0 1rem;font-weight:700}
 .tbtn:active{background:rgba(255,255,255,.2)}
-.timer{display:flex;align-items:center;gap:.5rem;background:rgba(0,0,0,.25);border-radius:1rem;padding:.3rem .5rem .3rem .3rem}
-.timer .face{display:flex;align-items:center;gap:.6rem;border:0;background:transparent;color:#fff;padding:0 .4rem 0 0;min-height:3.2rem}
-.timer svg{width:2.9rem;height:2.9rem;transform:rotate(-90deg)}
+.timer{display:flex;align-items:center;gap:.5rem;background:rgba(0,0,0,.25);border-radius:1rem;padding:.2rem .45rem .2rem .25rem}
+.timer .face{display:flex;align-items:center;gap:.6rem;border:0;background:transparent;color:#fff;padding:0 .4rem 0 0;min-height:2.6rem}
+.timer svg{width:2.4rem;height:2.4rem;transform:rotate(-90deg)}
 .timer circle{fill:none;stroke-width:5}
 .timer .bg{stroke:rgba(255,255,255,.25)}
 .timer .fg{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset .25s linear}
-.timer .t{font-variant-numeric:tabular-nums;font-size:1.7rem;font-weight:700;min-width:3.6ch}
-.timer .mini{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:.6rem;min-height:2.6rem;min-width:2.6rem;font-weight:700}
+.timer .t{font-variant-numeric:tabular-nums;font-size:1.5rem;font-weight:700;min-width:3.6ch}
+.timer .mini{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:.6rem;min-height:2.4rem;min-width:2.4rem;font-weight:700}
 .timer.done{animation:pulse .8s ease-in-out 4}
 @keyframes pulse{50%{background:#fff;color:#000}}
 @media (prefers-reduced-motion:reduce){.timer.done{animation:none;outline:3px solid #fff}}
@@ -70,9 +71,9 @@ button{cursor:pointer;touch-action:manipulation}
 .step.on .n{background:var(--brand);color:#fff}
 
 /* stage layout */
-.stage{flex:1;min-height:0;display:grid;grid-template-columns:minmax(17rem,24%) 1fr;grid-template-rows:minmax(0,1fr);gap:1.25rem;padding:1.25rem}
-.rail{overflow:auto;padding-right:.25rem}
-.work{min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:1rem;padding:.25rem}
+.stage{flex:1 0 auto;display:grid;grid-template-columns:minmax(17rem,24%) 1fr;grid-template-rows:auto;gap:1.25rem;padding:1.25rem}
+.rail{padding-right:.25rem}
+.work{min-width:0;display:flex;flex-direction:column;gap:1rem;padding:.25rem}
 .phase{font-size:1rem;color:var(--brand-text);font-weight:700;margin:0 0 .15rem}
 .rail h2{font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:0 0 .6rem}
 .rail h3{font-family:var(--serif);font-size:1.15rem;margin:1.1rem 0 .4rem}
@@ -185,8 +186,8 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 .stage.wide{grid-template-columns:1fr}
 .stage.wide .rail{display:none}
 .tile.dim{opacity:.45;filter:grayscale(1)}
-.canvaswrap.fill{flex:1;min-height:22rem;display:flex;flex-direction:column}
-.canvaswrap.fill .padtools{position:sticky;top:0;z-index:6;background:var(--surface);padding-bottom:.3rem}
+.canvaswrap.fill{flex:1 0 auto;min-height:22rem;display:flex;flex-direction:column}
+.canvaswrap.fill .padtools{position:sticky;top:var(--chrome-h,0px);z-index:6;background:var(--surface);padding-bottom:.3rem}
 .canvaswrap.fill .padstage{flex:1;min-height:0}
 .sketch.fill{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;background:#fff}
 .empty-pad{position:absolute;inset:0;display:grid;place-items:center;color:#8a8580;font-family:var(--serif);font-size:1.1rem}
@@ -203,14 +204,13 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 .pip.cur{background:var(--brand)}
 .tag2{display:inline-block;margin-left:.5rem;font-size:.85rem;font-weight:700;color:#fff;background:var(--ok);border-radius:2rem;padding:.05rem .6rem}
 .gacts{display:flex;flex-direction:column;gap:.5rem;min-width:9.5rem}
-.fitwrap{flex:1;min-height:0;min-width:0;container-type:size;display:flex;align-items:center;justify-content:center}
-.so-card .fitwrap{align-items:flex-start}
-.fitbox{width:min(100cqw,calc(100cqh * var(--asp)));aspect-ratio:var(--asp);flex:none}
+.fitwrap{min-width:0;width:100%}
+.fitbox{width:100%;aspect-ratio:var(--asp)}
 .fitbox img{height:100%!important;object-fit:fill}
-.so{flex:1;min-height:20rem;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr);gap:1rem}
+.so{flex:1 0 auto;min-height:20rem;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:auto;gap:1rem}
 .so.lean{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)}
-.so-col{display:flex;flex-direction:column;gap:1rem;min-height:0;min-width:0}
-.so-card{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:.7rem 1rem;display:flex;flex-direction:column;min-height:0;min-width:0;overflow:auto}
+.so-col{display:flex;flex-direction:column;gap:.8rem;min-width:0}
+.so-card{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:.6rem 1rem;display:flex;flex-direction:column;min-width:0;overflow:visible}
 .so-card h3{font-family:var(--serif);font-size:1.15rem;margin:0 0 .5rem}
 .ptop{display:flex;gap:1rem;align-items:center}
 .pdraw{flex:0 0 13rem}
@@ -231,7 +231,7 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 .persona-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1rem;min-height:0}
 
 /* footer */
-.nav{display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;border-top:2px solid var(--line);background:var(--surface)}
+.nav{display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;border-top:2px solid var(--line);background:var(--surface);position:sticky;bottom:0;z-index:30}
 .nav .note-s{flex:1;font-size:.9rem;color:var(--muted)}
 
 /* overlay + toast */
@@ -252,6 +252,7 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 </head>
 <body>
 <div class="app">
+  <div class="chrome">
   <header class="top">
     <div>
       <h1>Legal Design Workshop</h1>
@@ -278,6 +279,7 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
     </div>
   </header>
   <nav class="stepper" id="stepper" aria-label="Workshop steps"></nav>
+  </div>
   <main class="stage" id="stage">
     <aside class="rail" id="rail"></aside>
     <section class="work" id="work"></section>
@@ -454,15 +456,14 @@ const STAGES_BY = {
 };
 STAGES_BY.plg2 = [
   {id: "team", short: "Form your team", phase: "Team formation", title: "Form your team", mins: 5, render: rTeam},
-  {id: "focus", short: "Problem focus", phase: "Pulling it all together", title: "Choose your problem focus", mins: 10, suggested: true, render: rD2Focus},
+  {id: "focus", short: "Problem focus", phase: "Pulling it all together", title: "Choose your problem focus", mins: 2, render: rD2Focus},
   {id: "persona", short: "End user", phase: "Empathize and define", title: "Who is Your End User", mins: 10, render: rPersona},
-  {id: "problem", short: "Framing the Problem", phase: "Empathize and define", title: "Framing the Problem", mins: 10, render: rProblem},
-  {id: "analogy", short: "Great thing", phase: "Ideation", title: "Borrow from something you love", mins: 7, render: rAnalogy},
+  {id: "problem", short: "Framing the Problem", phase: "Empathize and define", title: "Framing the Problem", mins: 5, render: rProblem},
+  {id: "analogy", short: "Great thing", phase: "Ideation", title: "Borrow from something you love", mins: 10, render: rAnalogy},
   {id: "individual", short: "Individual Brainstorming", phase: "Ideation", title: "Individual Brainstorming", mins: 5, render: rD2Individual},
   {id: "group", short: "Group Brainstorm", phase: "Ideation", title: "Group Brainstorm", mins: 15, full: true, render: rD2Group},
   {id: "share", short: "Share-out", phase: "Share", title: "Share-out", mins: 5, full: true, render: rD2Share}
 ];
-STAGES_BY.plg2.slice(1).forEach(x => { x.timed = false; });
 STAGES_BY.omv = STAGES_BY.bob;
 const STG = () => STAGES_BY[S.mode];
 
@@ -511,6 +512,7 @@ function go(i){
   S.stage = Math.max(0, Math.min(STG().length - 1, i));
   setTimer(STG()[S.stage].mins);
   render();
+  window.scrollTo(0, 0);
   if (typeof liveTick === "function") liveTick();
 }
 function render(){
@@ -529,10 +531,15 @@ function render(){
   $("#rail").scrollTop = 0;
   if (out.after) out.after();
   $("#b-back").style.visibility = S.stage === 0 ? "hidden" : "visible";
-  $("#b-next").textContent = S.stage === STG().length - 1 ? (S.mode === "plg" ? "Present the snapshot" : S.mode === "plg2" ? "Present" : "Present the pitch") : "Next: " + STG()[S.stage + 1].short;
+  const last = S.stage === STG().length - 1;
+  $("#b-next").style.display = last ? "none" : "";
+  if (!last) $("#b-next").textContent = "Next: " + STG()[S.stage + 1].short;
+  setChromeVar();
 }
 $("#b-back").onclick = () => go(S.stage - 1);
-$("#b-next").onclick = () => { if (S.stage === STG().length - 1) present(); else go(S.stage + 1); };
+$("#b-next").onclick = () => go(S.stage + 1);
+function setChromeVar(){ const c = document.querySelector(".chrome"); if (c) document.documentElement.style.setProperty("--chrome-h", c.offsetHeight + "px"); }
+window.addEventListener("resize", setChromeVar);
 document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { if (S.mode !== b.dataset.mode){ const prev = S; S = freshState(b.dataset.mode); if (prev.mode === "plg" && S.mode === "plg2"){ S.plg = prev.plg; S.team = prev.team; } setTimer(STG()[0].mins); render(); } });
 $("#b-reset").onclick = () => { S = freshState(S.mode); applyGroupHash(); setTimer(STG()[0].mins); render(); toast("Cleared. Fresh board."); };
 $("#b-full").onclick = () => { try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} };
@@ -782,9 +789,15 @@ function sketchPad(key, opts){
     stks().push(st); drawStickies(st.id);
   }
   let down = false, lx = 0, ly = 0;
+  const touches = new Map(); let pan = null;
+  const midY = () => { let t = 0; touches.forEach(v => { t += v.y; }); return t / touches.size; };
   const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
-  cv.addEventListener("pointerdown", e => { sel = null; mark(); down = true; cv.setPointerCapture(e.pointerId); [lx, ly] = pt(e); ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over"; ctx.fillStyle = S.pen; ctx.beginPath(); ctx.arc(lx, ly, S.eraser ? 18 : 2.5, 0, 6.3); ctx.fill(); });
+  cv.addEventListener("pointerdown", e => {
+    if (e.pointerType === "touch"){ touches.set(e.pointerId, {y: e.clientY}); if (touches.size >= 2){ if (down){ down = false; saveSketch(); } pan = {y: midY()}; return; } }
+    sel = null; mark(); down = true; cv.setPointerCapture(e.pointerId); [lx, ly] = pt(e); ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over"; ctx.fillStyle = S.pen; ctx.beginPath(); ctx.arc(lx, ly, S.eraser ? 18 : 2.5, 0, 6.3); ctx.fill();
+  });
   cv.addEventListener("pointermove", e => {
+    if (e.pointerType === "touch" && touches.has(e.pointerId)){ touches.set(e.pointerId, {y: e.clientY}); if (pan){ const my = midY(); window.scrollBy(0, pan.y - my); pan.y = my; return; } }
     if (!down) return;
     const [x, y] = pt(e);
     ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over";
@@ -792,7 +805,7 @@ function sketchPad(key, opts){
     ctx.lineWidth = S.eraser ? 36 : (e.pointerType === "pen" && e.pressure ? 2 + e.pressure * 8 : 5);
     ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(x, y); ctx.stroke(); lx = x; ly = y;
   });
-  const up = () => { if (down){ down = false; saveSketch(); } };
+  const up = e => { if (e && e.pointerType === "touch"){ touches.delete(e.pointerId); if (touches.size < 2) pan = null; } if (down){ down = false; saveSketch(); } };
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
   const sw = p => { const t = document.createElement("i"); t.style.background = p; return t.style.background; };
   const swatches = (opts.skin === false ? PALETTE : [...PALETTE, ...SKIN]).map((p, i) => h("button", {class: "swatch", style: "background:" + p, "aria-label": "Color " + (i + 1),
@@ -813,7 +826,8 @@ function sketchPad(key, opts){
         h("button", {class: "btn sm", onclick: () => addShape("square")}, "■ Square")] : null,
       opts.stickies ? h("div", {class: "row", style: "gap:.4rem;margin:0 .6rem"}, h("span", {style: "font-weight:700"}, "Sticky note"),
         [0, 1, 2, 3].map(c => h("button", {class: "stkbtn", style: "background:" + STICKY[c], "aria-label": "Add sticky note", onclick: () => addSticky(c)}, "+"))) : null,
-      h("button", {class: "btn sm quiet", onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); S[key] = null; S.shapes[key] = []; sel = null; drawShapes(); }}, "Clear drawing")));
+      h("button", {class: "btn sm quiet", onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); S[key] = null; S.shapes[key] = []; sel = null; drawShapes(); }}, "Clear drawing")),
+    opts.fill ? h("div", {class: "muted", style: "font-size:.9rem"}, "Draw with one finger or the pen. To scroll the page, drag with two fingers.") : null);
   drawShapes(); drawStickies();
   const wrap = h("div", {class: "canvaswrap" + (fill ? " fill" : "")}, tools, h("div", {class: "padstage"}, cv, layer, stkLayer));
   /* big whiteboards size their bitmap to the space available */
@@ -853,7 +867,7 @@ function rPersona(){
   const work = [h("div", {class: "persona-grid"},
     sketchPad("drawing"),
     h("div", {style: "display:flex;flex-direction:column;gap:.7rem"},
-      f("Name", "name", "Give them a name"),
+      f("Name (e.g. John G. Cee)", "name", "Give them a name"),
       f("Role, background, years in their role", "role", "e.g. a general counsel at a manufacturer, in role 5 years, formerly a law firm partner"),
       f("What frustrates them about this challenge?", "frust", "In their words…", true),
       f("What do they want or need?", "wants", "Wants and needs…", true)))];
@@ -1041,26 +1055,6 @@ function rPitch(){
   ];
   return {rail, work};
 }
-function present(){
-  const P = S.plg;
-  const D = S.d2;
-    const steps = S.mode === "plg2"
-    ? [["Our team", S.team.name || "Our team"], ["The pain point we chose", D.chosen], ["Our end user", [S.pers.name, S.pers.role].filter(Boolean).join("\n"), "drawing"],
-       ["Our problem statement", stmtText()], ["Our great thing: " + (S.analogy || ""), S.attrs.slice(0, 6).join("\n")], ["Our ideas", "", "whiteboard"]]
-    : S.mode === "plg"
-    ? [["Pain point of talented lawyers", P.talentAgreed], ["Pain point of clients and buyers", P.clientAgreed], ["Market gap insight", P.gap]]
-    : [["Team", S.team.name || "Our team"], ["Key insight", S.pitch.key], ["Our idea", S.pitch.idea], ["Why it will work", S.pitch.why], ["Why it matters for the future of law", S.pitch.matter]];
-  let i = 0;
-  const k = h("div", {class: "k"}), v = h("div", {class: "v"});
-  const vw = h("div", {style: "max-width:min(100%,1100px);max-height:55vh;overflow:auto"});
-  const ov = h("div", {class: "present"}, k, v, vw,
-    h("div", {class: "bar"}, h("button", {class: "btn", onclick: () => { i = Math.max(0, i - 1); draw(); }}, "Back"), h("div", {style: "flex:1"}),
-      h("button", {class: "btn", onclick: () => { if (i === steps.length - 1) ov.remove(); else { i++; draw(); } }}, "Next"),
-      h("button", {class: "btn", onclick: () => ov.remove()}, "Close")));
-  function draw(){ k.textContent = steps[i][0]; v.textContent = steps[i][1] || (steps[i][2] ? "" : "(nothing here yet)"); vw.replaceChildren(); if (steps[i][2]) vw.append(sketchView(steps[i][2], "2/1")); }
-  draw(); document.body.append(ov);
-}
-
 /* ---------- Potomac Law Group: market gaps ---------- */
 const WHO = ["Talented lawyers", "In-house lawyers", "Law firm associates", "Law firm partners"];
 
@@ -1202,7 +1196,7 @@ function fitView(key, ratio, cls){
 function shareoutGrid(opts){
   const withIdeas = !opts || opts.ideas !== false;
   const lab = t => h("p", {class: "label", style: "margin:.4rem 0 .05rem"}, t);
-  const persona = h("div", {class: "so-card", style: "flex:1 1 0"},
+  const persona = h("div", {class: "so-card", style: "flex:1 1 auto"},
     h("h3", {style: "margin-bottom:.4rem"}, "Our end user" + (S.pers.name ? ": " + S.pers.name : "")),
     h("div", {class: "ptop"}, h("div", {class: "pdraw"}, sketchView("drawing", "25/16")), S.pers.role ? h("div", {class: "prole"}, S.pers.role) : null),
     h("div", {class: "plists"},
@@ -1211,10 +1205,10 @@ function shareoutGrid(opts){
   const great = h("div", {class: "so-card", style: "flex:0 0 auto;overflow:visible"},
     h("h3", {style: "margin-bottom:.4rem"}, "Our great thing" + (S.analogy ? ": " + S.analogy : "")),
     S.attrs.length ? h("div", {class: "chips", style: "gap:.35rem"}, S.attrs.map(a => h("span", {class: "chip", style: "min-height:1.6rem;padding:0 .65rem;font-size:.8rem"}, a))) : h("p", {class: "muted", style: "margin:0"}, "No attributes listed yet."));
-  const problem = h("div", {class: "so-card", style: withIdeas ? "" : "flex:1 1 0"},
+  const problem = h("div", {class: "so-card", style: withIdeas ? "" : "flex:1 1 auto"},
     h("h3", {style: "margin-bottom:.3rem"}, "Our problem"),
     h("p", {style: "margin:0;font-family:var(--serif);font-size:" + (withIdeas ? "1.12rem" : "1.35rem") + ";line-height:1.5"}, stmtText()));
-  const ideas = h("div", {class: "so-card", style: "flex:1 1 0"}, h("h3", {}, "Our ideas"), fitView("whiteboard", "2/1"));
+  const ideas = h("div", {class: "so-card", style: "flex:1 1 auto"}, h("h3", {}, "Our ideas"), fitView("whiteboard", "2/1"));
   return h("div", {class: "so" + (withIdeas ? "" : " lean")}, h("div", {class: "so-col"}, persona, great), h("div", {class: "so-col"}, problem, withIdeas ? ideas : null));
 }
 const CARD_H = "font-family:var(--serif);margin:0 0 .6rem;font-size:1.3rem";
@@ -1243,16 +1237,25 @@ function rD2Individual(){
 function rD2Group(){
   const banner = h("div", {class: "board-card"},
     h("p", {class: "phase"}, "Ideation"),
-    h("h2", {style: "font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:0 0 .5rem"}, "Group Brainstorm"),
+    h("div", {style: "display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem"},
+      h("h2", {style: "font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:0"}, "Group Brainstorm"),
+      h("span", {class: "timepill", style: "margin:0"}, "Time: " + STG().find(x => x.id === "group").mins + " minutes")),
     h("p", {style: "font-size:1.2rem;margin:0;line-height:1.45"}, "Have each person share their ideas, recording them on your whiteboard so you can all see them. As a group brainstorm and come up with 3-4 directional ideas for addressing the problem you identified. (Extra credit for creativity and branding!)"));
   const wb = sketchPad("whiteboard", {fill: true, skin: false, stickies: true});
-  /* 40% more room than the screen offers: the page scrolls, the toolbar stays pinned */
-  return {rail: [], work: [banner, wb], after: () => { wb.style.minHeight = ""; wb.__fit(); const r = wb.getBoundingClientRect(), ch = wb.querySelector("canvas").getBoundingClientRect().height; if (r.height && ch) wb.style.minHeight = Math.round(r.height + ch * 0.4) + "px"; wb.__fit(); }};
+  /* 40% more room than the screen offers: the whole page scrolls, the toolbar stays pinned */
+  return {rail: [], work: [banner, wb], after: () => {
+    wb.style.minHeight = "";
+    const nav = document.querySelector(".nav").offsetHeight, tb = wb.querySelector(".padtools").offsetHeight;
+    const avail = window.innerHeight - wb.getBoundingClientRect().top - nav - 24;
+    if (avail > 200) wb.style.minHeight = Math.round(avail + 0.4 * (avail - tb)) + "px";
+    wb.__fit();
+  }};
 }
 
 function rD2Share(){
   const head = h("div", {style: "display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap"},
     h("h2", {style: "font-family:var(--serif);font-size:1.2rem;margin:0"}, "Share-out"),
+    h("span", {class: "timepill", style: "margin:0"}, "Time: " + STG().find(x => x.id === "share").mins + " minutes"),
     h("span", {class: "muted"}, "Prepare to share: the problem and your end user, the great thing, and your best directional ideas."));
   return {rail: [], work: [head, shareoutGrid()]};
 }
