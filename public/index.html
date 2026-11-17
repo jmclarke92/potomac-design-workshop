@@ -518,7 +518,7 @@ function go(i){
 function render(){
   S.maxStage = Math.max(S.maxStage || 0, S.stage);
   const st = STG()[S.stage];
-  $("#subtitle").textContent = C().subtitle + (S.groupNo ? " · Group " + S.groupNo : "");
+  $("#subtitle").textContent = C().subtitle + (S.groupNo ? " · Group " + S.groupNo : "") + (demoId() ? " · Demo, not saved" : "");
   $("#timer").style.display = st.timed === false ? "none" : "";
   $("#stage").classList.toggle("wide", !!st.full);
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === S.mode)));
@@ -1350,11 +1350,54 @@ const DEMO = [
    look: {skin: "#fbe3d0", shirt: "#e8710a", bubble: "Again?"}},
   {team: "", step: 1, talent: T_[5], client: C_[5], chosen: null}
 ];
+/* ---------- Workshop versions (the facilitator picker) ----------
+   One entry per workshop version. live: true  = runs for real (group links, saved work, facilitator view);
+   live: false = runs as a one-screen demo, so the picker links out to it (#demo=<mode>).
+   To add a version: define its CASES / STAGES_BY entries, add it here, and (once it is live) add its id
+   to LIVE_VERSIONS in netlify/functions/api.mjs. */
+const VERSIONS = [
+  {id: "plg2", mode: "plg2", live: true, name: "Potomac Law Group · Day 2", org: "Potomac Law Group", blurb: "Pulling it all together. Groups start from a Day 1 pain point, define the problem, borrow from something they love and pitch an idea."},
+  {id: "plg", mode: "plg", live: false, name: "Potomac Law Group · Day 1", org: "Potomac Law Group", blurb: "Looking for market gaps: the pain points of talented lawyers and of clients and buyers of legal services."},
+  {id: "omv", mode: "omv", live: false, name: "O’Melveny", org: "O’Melveny", blurb: "How might we energize and support entrepreneurism among our partners? Teams pick a partner persona and design for it."},
+  {id: "bob", mode: "bob", live: false, name: "Bob Anderson case", org: "Leadership in Law Firms", blurb: "Design a solution that would surprise and delight Bob Anderson, the rainmaking practice group leader."}
+];
+const versionName = id => { const v = VERSIONS.find(x => x.id === id); return v ? v.name : (id || ""); };
+const demoUrl = v => location.href.split("#")[0] + "#demo=" + v.mode;
+async function chooseVersion(v){
+  if (!v.live) return;
+  if (!A.live){ A.version = v.id; A.choosing = false; A.msg = ""; renderAdmin(); return; }
+  try {
+    await api("PUT", "/api/admin/version", {version: v.id}, {pin: A.pin});
+    A.version = v.id; A.choosing = false; A.msg = ""; renderAdmin();
+  } catch (e){ A.msg = "Couldn’t set the version: " + errText(e); renderAdmin(); }
+}
+function adminPicker(){
+  const top = h("header", {class: "top"},
+    h("div", {}, h("h1", {}, "Facilitator View"), h("div", {class: "sub"}, "Choose today’s workshop")),
+    h("div", {class: "spacer"}),
+    A.choosing && A.version ? h("button", {class: "tbtn", onclick: () => { A.choosing = false; renderAdmin(); }}, "Back to " + versionName(A.version)) : null,
+    h("button", {class: "tbtn", onclick: () => { location.hash = ""; route(); }}, "Group view"));
+  const cards = VERSIONS.map(v => h("div", {class: "gcard", style: "gap:.7rem"},
+    h("div", {class: "row", style: "justify-content:space-between;flex-wrap:nowrap;min-height:2.2rem"},
+      h("span", {class: "muted", style: "font-weight:700;min-width:0"}, v.org),
+      h("span", {class: v.live ? "tag2" : "timepill", style: "margin:0;flex:none;white-space:nowrap"}, v.live ? "Live" : "Demo only")),
+    h("h3", {style: "font-family:var(--serif);font-size:1.4rem;margin:0"}, v.name),
+    h("p", {style: "margin:0;flex:1"}, v.blurb),
+    v.live
+      ? h("button", {class: "btn primary", onclick: () => chooseVersion(v)}, A.choosing && A.version === v.id ? "Keep this version" : "Run this version")
+      : h("a", {class: "btn", href: demoUrl(v), target: "_blank", rel: "noopener", style: "display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit"}, "Open demo ↗")));
+  const body = h("div", {class: "body"},
+    A.msg ? h("div", {class: "banner", style: "font-family:var(--sans);font-size:1.05rem;background:var(--s0);border-color:var(--sticky-ink);color:var(--sticky-ink)", role: "alert"}, A.msg) : null,
+    h("div", {class: "banner", style: "font-family:var(--sans);font-size:1.05rem"}, "Pick the version you are running today. Live versions save each group’s work and unlock the facilitator tools. Demo versions run on one screen only and don’t save, so they open in a new tab."),
+    h("div", {style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(20rem,1fr));gap:1rem"}, cards));
+  return [top, body];
+}
+
 let A = null;
 function newGroup(){ return {id: Math.max(0, ...A.groups.map(g => g.id)) + 1, key: "", team: "", step: 0, talent: "", client: "", chosen: null, _st: null}; }
 function seedAdmin(){
-  if (LIVE){ A = {live: true, groups: [], present: null, linkOpen: null, confirm: null, pin: getPin(), locked: !getPin(), msg: "", loading: false, dirty: new Set(), saved: ""}; if (!A.locked) adminLoad(); return; }
-  A = {groups: DEMO.map((g, i) => ({...g, id: i + 1, _st: null})), present: null, linkOpen: null, confirm: null};
+  if (LIVE){ A = {live: true, version: null, choosing: false, groups: [], present: null, linkOpen: null, confirm: null, pin: getPin(), locked: !getPin(), msg: "", loading: false, dirty: new Set(), saved: ""}; if (!A.locked) adminLoad(); return; }
+  A = {version: "plg2", choosing: false, groups: DEMO.map((g, i) => ({...g, id: i + 1, _st: null})), present: null, linkOpen: null, confirm: null};
 }
 
 /* Builds a group's full state from its (simulated) progress so the real Share-out views can render it. */
@@ -1387,23 +1430,24 @@ function renderAdmin(){
   let el = document.getElementById("admin");
   if (!el){ el = h("div", {id: "admin", class: "adm"}); document.body.append(el); }
   el.style.display = "flex";
-  el.replaceChildren(...(A.live && A.locked ? adminLock() : A.present != null ? adminPresent() : A.view === "links" ? adminLinks() : adminList()));
+  el.replaceChildren(...(A.live && A.locked ? adminLock() : (!A.version || A.choosing) ? adminPicker() : A.present != null ? adminPresent() : A.view === "links" ? adminLinks() : adminList()));
 }
 function adminList(){
   const stages = STAGES_BY.plg2;
   const top = h("header", {class: "top"},
-    h("div", {}, h("h1", {}, "Facilitator View"), h("div", {class: "sub", id: "adm-sub"}, A.live ? "Potomac Law Group · Day 2 · live" + (A.saved ? " · " + A.saved : "") : "Potomac Law Group · Day 2 · demo with simulated groups")),
+    h("div", {}, h("h1", {}, "Facilitator View"), h("div", {class: "sub", id: "adm-sub"}, versionName(A.version) + (A.live ? " · live" + (A.saved ? " · " + A.saved : "") : " · demo with simulated groups"))),
     h("div", {class: "spacer"}),
     h("button", {class: "tbtn", onclick: async () => { A.groups.push(newGroup()); renderAdmin(); if (A.live){ await saveConfig(); renderAdmin(); } }}, "Add group"),
     h("button", {class: "tbtn", onclick: () => exportAll()}, "Export all (PDF)"),
     h("button", {class: "tbtn", onclick: () => { A.view = "links"; renderAdmin(); }}, "Links"),
     A.live ? h("button", {class: "tbtn", onclick: () => adminPoll(true)}, "Refresh") : null,
+    A.live && !A.groups.length ? h("button", {class: "tbtn", onclick: () => { A.choosing = true; renderAdmin(); }}, "Change version") : null,
     A.live
       ? h("button", {class: "tbtn", onclick: () => {
           if (A.confirmReset){ A.confirmReset = false; newSession(); }
           else { A.confirmReset = true; renderAdmin(); setTimeout(() => { if (A.confirmReset){ A.confirmReset = false; if (A.present == null && !A.view) renderAdmin(); } }, 4000); }
         }}, A.confirmReset ? "Tap again to erase everything" : "Start new session")
-      : h("button", {class: "tbtn", onclick: () => { seedAdmin(); renderAdmin(); toast("Demo reset"); }}, "Reset demo"),
+      : h("button", {class: "tbtn", onclick: () => { seedAdmin(); A.version = null; renderAdmin(); toast("Demo reset"); }}, "Reset demo"),
     h("button", {class: "tbtn", onclick: () => { location.hash = ""; route(); }}, "Group view"));
   const cards = A.groups.map(g => {
     const done = g.step >= 7, cs = g.cur != null ? g.cur : g.step;
@@ -1690,7 +1734,7 @@ async function removeGroupLive(g){
 async function newSession(){
   try {
     await api("POST", "/api/admin/reset", {}, {pin: A.pin});
-    A.groups = []; A.dirty = new Set(); A.present = null; A.view = null; A.msg = ""; renderAdmin();
+    A.groups = []; A.dirty = new Set(); A.present = null; A.view = null; A.msg = ""; A.version = null; A.choosing = false; renderAdmin();
     toast("New session: every group and all saved work were erased");
   } catch (e){ A.msg = "Couldn’t start a new session: " + errText(e); renderAdmin(); }
 }
@@ -1766,7 +1810,7 @@ async function initLive(){
   try { const r = await api("GET", "/api/ping", undefined, {timeout: 2500}); LIVE = !!(r && r.ok); } catch (e){ LIVE = false; }
   if (!LIVE) return;
   const p = new URLSearchParams(location.hash.slice(1));
-  if (location.hash === "#admin") return;
+  if (location.hash === "#admin" || demoId()) return;
   const g = p.get("g"), k = p.get("k");
   if (!g || !k){ LV.blocked = true; showBlock("Open the link your facilitator gave your group. This page needs your group’s own link to save your work."); return; }
   try {
@@ -1801,7 +1845,7 @@ function mergeAdminList(list){
 async function adminLoad(){
   try {
     const d = await api("GET", "/api/admin/groups", undefined, {pin: A.pin});
-    A.locked = false; A.msg = ""; mergeAdminList(d.groups); renderAdmin();
+    A.locked = false; A.msg = ""; A.version = d.version || null; mergeAdminList(d.groups); renderAdmin();
   } catch (e){
     if (e.status === 401){ A.locked = true; A.pin = ""; setPin(""); A.msg = "That PIN didn’t work. Try again."; }
     else if (e.status === 500){ A.locked = true; A.msg = e.message; }
@@ -1812,9 +1856,9 @@ async function adminLoad(){
 async function adminPoll(force){
   if (!A || !A.live || A.locked) return;
   try {
-    const sig = () => JSON.stringify(A.groups.map(g => [g.id, g.team, g.step, g.cur, g.chosen, g.updatedAt, g.talent, g.client, g.key]));
+    const sig = () => JSON.stringify([A.version, A.groups.map(g => [g.id, g.team, g.step, g.cur, g.chosen, g.updatedAt, g.talent, g.client, g.key])]);
     const d = await api("GET", "/api/admin/groups", undefined, {pin: A.pin});
-    const before = sig(), hadMsg = !!A.msg; mergeAdminList(d.groups); A.msg = "";
+    const before = sig(), hadMsg = !!A.msg; if (!A.choosing) A.version = d.version || null; mergeAdminList(d.groups); A.msg = "";
     if (before === sig() && !force && !hadMsg) return;
     if (A.present != null){
       const g = A.groups.find(x => x.id === A.present);
@@ -1849,13 +1893,13 @@ async function saveConfig(){
     d.groups.forEach(x => { const g = A.groups.find(y => y.id === x.id); if (g) g.key = x.key; });
     A.dirty = new Set(); A.msg = "";
     A.saved = "Setup saved " + new Date().toLocaleTimeString([], {hour: "numeric", minute: "2-digit", second: "2-digit"});
-    const sub = document.getElementById("adm-sub"); if (sub) sub.textContent = "Potomac Law Group · Day 2 · live · " + A.saved;
+    const sub = document.getElementById("adm-sub"); if (sub) sub.textContent = versionName(A.version) + " · live · " + A.saved;
   } catch (e){ A.msg = "Couldn’t save the setup: " + errText(e); const sub = document.getElementById("adm-sub"); if (sub) sub.textContent = A.msg; }
 }
 function adminLock(){
   const unlock = () => { A.pin = inp.value.trim(); if (!A.pin) return; setPin(A.pin); A.locked = false; A.msg = ""; adminLoad(); };
   const inp = h("input", {class: "input", type: "password", placeholder: "Facilitator PIN", style: "max-width:22rem", onkeydown: e => { if (e.key === "Enter") unlock(); }});
-  const top = h("header", {class: "top"}, h("div", {}, h("h1", {}, "Facilitator View"), h("div", {class: "sub"}, "Potomac Law Group · Day 2")), h("div", {class: "spacer"}),
+  const top = h("header", {class: "top"}, h("div", {}, h("h1", {}, "Facilitator View"), h("div", {class: "sub"}, "Workshop facilitator sign-in")), h("div", {class: "spacer"}),
     h("button", {class: "tbtn", onclick: () => { location.hash = ""; route(); }}, "Group view"));
   const body = h("div", {class: "body"}, h("div", {class: "gcard", style: "max-width:34rem;margin:3rem auto;gap:1rem"},
     h("h3", {style: CARD_H}, "Facilitator sign-in"),
@@ -1890,9 +1934,12 @@ function route(){
    To bring them back: set SHOW_CASE_SWITCHER = true. */
 const SHOW_CASE_SWITCHER = false;
 const DEFAULT_MODE = "plg2";
-S = freshState(DEFAULT_MODE);
+/* #demo=<mode> opens a one-screen demo of that version (linked from the facilitator picker). It never saves,
+   and shows the version switcher so the demos can be compared. */
+function demoId(){ const d = new URLSearchParams(location.hash.slice(1)).get("demo"); return d && CASES[d] ? d : ""; }
+S = freshState(demoId() || DEFAULT_MODE);
 setTimer(STG()[0].mins);
-if (!SHOW_CASE_SWITCHER) document.querySelector(".seg").style.display = "none";
+if (!SHOW_CASE_SWITCHER && !demoId()) document.querySelector(".seg").style.display = "none";
 applyGroupHash();
 window.addEventListener("hashchange", route);
 document.querySelector(".app").style.visibility = "hidden";
