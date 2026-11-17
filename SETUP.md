@@ -29,6 +29,7 @@ Notes
 Workshop versions (facilitator picker)
 - After "Start new session" erases everything, the facilitator view opens on a picker. Pick the version you are running.
 - Live versions save work and use group links. Versions marked "Demo only" link out to a one-screen demo (public/index.html#demo=<id>).
+- Seyfarth in the Future is a demo-only version for now (#demo=sey). Its stages follow the Seyfarth workbook: challenge, I hate it when, How might we, persona, problem statement, great thing, individual and group brainstorm, prioritization matrix.
 - You can change the version only while no groups exist. Otherwise use "Start new session" first.
 - To add a version: add it to VERSIONS in public/index.html; when it is live, also add its id to LIVE_VERSIONS in netlify/functions/api.mjs.
 - A session saved before the picker existed counts as Potomac Day 2, so nothing needs migrating.

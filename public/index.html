@@ -15,6 +15,7 @@
   --ok:#2f7a45;
   --serif:"Literata", Georgia, "Times New Roman", serif;
   --sans:"Atkinson Hyperlegible", "Segoe UI", system-ui, Arial, sans-serif;
+  --edge:1.5625rem; /* outside-edge breathing room (was 1.25rem; +25%) */
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -41,7 +42,7 @@ button{cursor:pointer;touch-action:manipulation}
 .chrome{position:sticky;top:0;z-index:30}
 
 /* header */
-.top{display:flex;align-items:center;gap:1rem;padding:.45rem 1.25rem;background:var(--brand);color:#fff;flex-wrap:wrap}
+.top{display:flex;align-items:center;gap:1rem;padding:.45rem var(--edge);background:var(--brand);color:#fff;flex-wrap:wrap}
 .top h1{font-family:var(--serif);font-size:1.45rem;margin:0;font-weight:700;letter-spacing:.005em}
 .top .sub{font-size:.9rem;opacity:.85}
 .top .spacer{flex:1}
@@ -63,7 +64,7 @@ button{cursor:pointer;touch-action:manipulation}
 @media (prefers-reduced-motion:reduce){.timer.done{animation:none;outline:3px solid #fff}}
 
 /* stepper */
-.stepper{display:flex;gap:.5rem;padding:.45rem 1.25rem;background:var(--slate);overflow-x:auto}
+.stepper{display:flex;gap:.5rem;padding:.45rem var(--edge);background:var(--slate);overflow-x:auto}
 .step{display:flex;align-items:center;gap:.55rem;border:2px solid transparent;background:var(--surface);color:var(--ink);border-radius:2rem;padding:.3rem 1rem .3rem .35rem;min-height:2.7rem;white-space:nowrap;font-weight:700}
 .step .n{display:grid;place-items:center;width:2.1rem;height:2.1rem;border-radius:50%;background:var(--slate);color:var(--slate-ink);font-size:.95rem}
 .step.done .n{background:var(--ok);color:#fff}
@@ -71,7 +72,7 @@ button{cursor:pointer;touch-action:manipulation}
 .step.on .n{background:var(--brand);color:#fff}
 
 /* stage layout */
-.stage{flex:1 0 auto;display:grid;grid-template-columns:minmax(17rem,24%) 1fr;grid-template-rows:auto;gap:1.25rem;padding:1.25rem}
+.stage{flex:1 0 auto;display:grid;grid-template-columns:minmax(17rem,24%) 1fr;grid-template-rows:auto;gap:1.25rem;padding:var(--edge)}
 .rail{padding-right:.25rem}
 .work{min-width:0;display:flex;flex-direction:column;gap:1rem;padding:.25rem}
 .phase{font-size:1rem;color:var(--brand-text);font-weight:700;margin:0 0 .15rem}
@@ -193,7 +194,7 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 .empty-pad{position:absolute;inset:0;display:grid;place-items:center;color:#8a8580;font-family:var(--serif);font-size:1.1rem}
 .review{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1rem;align-items:start}
 .adm{position:fixed;inset:0;z-index:40;display:none;flex-direction:column;background:var(--bg);color:var(--ink)}
-.adm .body{flex:1;min-height:0;overflow:auto;padding:.9rem 1.25rem 1.1rem;display:flex;flex-direction:column;gap:.7rem;width:100%;max-width:1800px;margin:0 auto}
+.adm .body{flex:1;min-height:0;overflow:auto;padding:1.125rem var(--edge) 1.375rem;display:flex;flex-direction:column;gap:.7rem;width:100%;max-width:1800px;margin:0 auto}
 .gcard{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.8rem}
 .grow{display:grid;grid-template-columns:4.5rem minmax(0,1.8fr) minmax(0,1fr) auto;gap:1.2rem;align-items:start}
 .gnum{font-family:var(--serif);font-size:2.6rem;font-weight:700;color:var(--brand-text);line-height:1}
@@ -218,7 +219,7 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 .plists{display:grid;grid-template-columns:1fr 1fr;gap:.2rem 1rem;font-size:.84rem;line-height:1.25;margin-top:.4rem}
 .plists ul{margin:.1rem 0;padding-left:1.1rem}
 .plists li{margin:.15rem 0}
-.stage.wide{padding-top:.5rem;padding-bottom:.5rem;gap:.6rem}
+.stage.wide{padding-top:.625rem;padding-bottom:.625rem;gap:.6rem}
 .linkline{font-family:ui-monospace,Consolas,monospace;word-break:break-all;font-size:1.05rem;margin:0}
 @media print{
   html,body{overflow:visible!important;height:auto!important;background:#fff!important}
@@ -230,8 +231,19 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
 }
 .persona-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1rem;min-height:0}
 
+/* seyfarth prioritization matrix */
+.mx{position:relative;flex:0 0 auto;height:max(22rem,calc(100vh - var(--chrome-h,0px) - 15rem));border:2px solid var(--line);border-radius:1.1rem;overflow:hidden;background:var(--surface);touch-action:none}
+.mx-grid{position:absolute;left:0;right:0;top:0;height:80%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.mx-q{padding:.7rem 1rem;font-family:var(--serif);font-weight:700;font-size:1.2rem;border:1px solid var(--line);color:var(--ink)}
+.mx-tray{position:absolute;left:0;right:0;bottom:0;height:20%;background:var(--slate);border-top:3px dashed var(--line);padding:.35rem 1rem;color:var(--slate-ink);font-size:.9rem;font-weight:700}
+.mx-note{position:absolute;width:14rem;background:var(--c);color:var(--sticky-ink);padding:.45rem .5rem .45rem .8rem;border-radius:.2rem .2rem .2rem 1.2rem;box-shadow:0 .25rem .8rem rgba(0,0,0,.25);border:2px solid rgba(0,0,0,.18);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
+.mx-note p{margin:0 0 .2rem;font-size:1rem;line-height:1.25}
+.mx-note .q{font-size:.8rem;opacity:.75;margin:0}
+.mx-note .x{position:absolute;top:.15rem;right:.15rem;border:0;background:rgba(0,0,0,.12);color:inherit;border-radius:.5rem;min-width:2.2rem;min-height:2.2rem;font-weight:700}
+.mx-note.has-x p{padding-right:2rem}
+
 /* footer */
-.nav{display:flex;align-items:center;gap:1rem;padding:.7rem 1.25rem;border-top:2px solid var(--line);background:var(--surface);position:sticky;bottom:0;z-index:30}
+.nav{display:flex;align-items:center;gap:1rem;padding:.7rem var(--edge);border-top:2px solid var(--line);background:var(--surface);position:sticky;bottom:0;z-index:30}
 .nav .note-s{flex:1;font-size:.9rem;color:var(--muted)}
 
 /* overlay + toast */
@@ -264,6 +276,7 @@ canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeat
       <button data-mode="omv" aria-pressed="false">O’Melveny challenge</button>
       <button data-mode="plg" aria-pressed="false">Potomac · Day 1</button>
       <button data-mode="plg2" aria-pressed="false">Potomac · Day 2</button>
+      <button data-mode="sey" aria-pressed="false">Seyfarth</button>
     </div>
     <button class="tbtn" id="b-sample">Fill sample</button>
     <button class="tbtn" id="b-reset">Reset</button>
@@ -323,6 +336,7 @@ const STICKY = ["var(--s0)", "var(--s1)", "var(--s2)", "var(--s3)"];
 const ATTRS = {
   "Amazon Prime": ["Fast, predictable delivery", "One-click ordering", "Perks bundled into one membership", "Personalized recommendations", "Easy returns, no questions", "Feels like the company has your back"],
   "Uber / Rideshare": ["Two-way ratings create a feedback loop", "See progress in real time", "Price is clear up front", "On demand, no scheduling", "Payment disappears into the background", "Matches the right driver to the right rider"],
+  "A great coffee shop": ["They know your usual order", "Same quality every time", "A welcoming place to meet", "Quick, easy ordering and payment", "Rewards that feel earned", "Staff who recognize you"],
   "Uber Eats": ["Live order tracking", "Huge choice in one place", "Ratings you can trust", "Delivered to wherever you are", "Reorder in two taps"],
   "Peloton": ["Leaderboard and community", "Pick the instructor you connect with", "Streaks and milestones keep you going", "Live or on demand", "Progress is always visible"],
   "Smart phones": ["Everything in one device", "Intuitive from the first minute", "Works the same everywhere", "Gets better with updates", "Always with you"],
@@ -412,13 +426,20 @@ CASES.plg2 = {
   needs: [], feelings: [], analogies: ["Amazon Prime", "Uber Eats", "ChatGPT", "Netflix", "iPhones"], seed: null
 };
 
+CASES.sey = {
+  name: "Seyfarth in the Future", subtitle: "Seyfarth Shaw LLP · Partner Leadership Program · Seyfarth in the Future workshop",
+  challenge: "Choose one firm- or practice-area challenge from your individual reflections and design a way to address it.",
+  short: "", stem: "I hate it that…", focusStem: "", refresher: null, personas: null, leadDefault: "", personaName: "",
+  needs: [], feelings: [], analogies: ["Amazon Prime", "Uber / Rideshare", "Netflix", "A great coffee shop"], seed: null
+};
+
 /* ---------- state ---------- */
 let S;
 function freshState(mode){
   const c = CASES[mode];
   return {
     mode, stage: 0,
-    team: {name: "", members: Array.from({length: mode === "plg2" ? 4 : 2}, () => ({name: "", talent: ""}))},
+    team: {name: "", members: Array.from({length: mode === "plg2" || mode === "sey" ? 4 : 2}, () => ({name: "", talent: ""}))},
     personaId: c.personas ? c.personas[0].id : null,
     notes: [], focusId: null, focusText: "",
     pers: {name: c.personaName, role: "", tenure: "", frust: "", wants: ""},
@@ -430,11 +451,14 @@ function freshState(mode){
     pitch: {key: "", idea: "", why: "", matter: ""},
     drawing: null, pen: "#1f1c1b", eraser: false,
     drawing2: null, whiteboard: null, maxStage: 0, imgRev: {}, stickies: {whiteboard: []}, padAspect: {}, shapes: {drawing: [], drawing2: [], whiteboard: []}, attrSlots: null, attrStore: {}, analogyKey: null, otherName: "",
+    sey: {chosen: null, hmw: "", revealed: false, matrix: []},
     d2: {pool: {talent: [], client: []}, chosen: "", kind: "", ideas: [], shown: false, drawer: false},
     plg: {who: 0, talent: [], talentPin: null, talentAgreed: "", talentShown: false, client: [], clientPin: null, clientAgreed: "", clientShown: false, gap: ""}
   };
 }
 const C = () => CASES[S.mode];
+/* Day 2 and Seyfarth share the "makes them feel" wording and the needs-from-persona flow */
+const isD2 = () => S.mode === "plg2" || S.mode === "sey";
 const mName = i => (S.team.members[i] && S.team.members[i].name.trim()) || ("Teammate " + (i + 1));
 
 const STAGES_BY = {
@@ -463,6 +487,17 @@ STAGES_BY.plg2 = [
   {id: "individual", short: "Individual Brainstorming", phase: "Ideation", title: "Individual Brainstorming", mins: 4, timeLabel: "3-4 minutes", render: rD2Individual},
   {id: "group", short: "Group Brainstorm", phase: "Ideation", title: "Group Brainstorm", mins: 15, render: rD2Group},
   {id: "share", short: "Share-Out", phase: "Share", title: "Share-Out", mins: 5, full: true, render: rD2Share}
+];
+STAGES_BY.sey = [
+  {id: "challenge", short: "Our Challenge", phase: "Choose your challenge", title: "Choose Your Team’s Challenge", mins: 5, render: rSeyChallenge},
+  {id: "hate", short: "I Hate It When", phase: "Problem finding", title: "I Hate It When…", mins: 5, render: rSeyHate},
+  {id: "hmw", short: "How Might We", phase: "Problem finding", title: "Group Sharing and Problem Finding", mins: 10, render: rSeyHmw},
+  {id: "persona", short: "End User", phase: "Empathize and define", title: "End-User Persona", mins: 10, render: rPersona},
+  {id: "problem", short: "Problem Statement", phase: "Empathize and define", title: "Develop Your Problem Statement", mins: 10, render: rProblem},
+  {id: "analogy", short: "Great Thing", phase: "Ideation", title: "Borrow from Something You Love", mins: 7, render: rAnalogy},
+  {id: "individual", short: "Individual Brainstorm", phase: "Ideation", title: "Brainstorming: Individual", mins: 5, render: rSeyIndividual},
+  {id: "group", short: "Group Brainstorm", phase: "Ideation", title: "Brainstorming: Group", mins: 10, render: rD2Group},
+  {id: "priority", short: "Prioritization", phase: "Prioritize", title: "Prioritization", mins: 5, render: rSeyMatrix}
 ];
 STAGES_BY.omv = STAGES_BY.bob;
 const STG = () => STAGES_BY[S.mode];
@@ -549,11 +584,12 @@ $("#b-sample").onclick = () => { fillSample(); render(); toast("Sample data load
 function fillSample(){
   if (S.mode === "plg") return fillPlg();
   if (S.mode === "plg2") return fillD2();
+  if (S.mode === "sey") return fillSey();
   const c = C(), sd = c.seed; const mode = S.mode; S = freshState(mode);
   S.team.name = sd.team;
   S.team.members = sd.members.map(m => ({name: m[0], talent: m[1]}));
   if (sd.persona){ const p = c.personas.find(x => x.id === sd.persona); S.personaId = p.id; S.lead = p.lead; S.pers.name = p.name; }
-  S.notes = sd.notes.map((t, i) => ({id: uid(), text: t, author: i % S.team.members.length, votes: i === sd.focus ? 2 : (i === 1 ? 1 : 0), x: 18 + (i % 4) * 255, y: 18 + Math.floor(i / 4) * 175 + (i % 2) * 14}));
+  S.notes = sd.notes.map((t, i) => ({id: uid(), text: t, author: i % S.team.members.length, votes: i === sd.focus ? 2 : (i === 1 ? 1 : 0), ...noteSlot(i)}));
   S.focusId = S.notes[sd.focus].id; S.focusText = S.notes[sd.focus].text;
   S.pers.role = mode === "bob" ? "Practice group leader, Technology Group" : "Lateral partner, 14 months at the firm";
   S.pers.tenure = mode === "bob" ? "11 years at the firm" : "14 months";
@@ -595,6 +631,12 @@ function rTeam(){
 }
 
 /* ---------- stage 2: pain points (reusable sticky-note board) ---------- */
+/* Where the n-th sticky note goes, sized to the screen so notes don't overlap (note width is 15.5rem). */
+function noteSlot(n, boardW){
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const step = 16.3 * rem, cols = Math.max(1, Math.floor(((boardW || 60 * rem) - 18) / step));
+  return {x: 18 + (n % cols) * step, y: 18 + Math.floor(n / cols) * 11.8 * rem + (n % 2) * 14};
+}
 function buildBoard(o){
   const author = h("div", {class: "row"}, S.team.members.map((m, i) =>
     h("button", {class: "chip who", "aria-pressed": String(S.draft.author === i), onclick: () => {
@@ -617,7 +659,7 @@ function buildBoard(o){
   function add(){
     const t = inp.value.trim(); if (!t) return;
     const n = o.list().length;
-    o.list().push({id: uid(), text: t, author: S.draft.author, votes: 0, x: 18 + (n % 4) * 255, y: 18 + Math.floor(n / 4) * 175 + (n % 2) * 14});
+    o.list().push({id: uid(), text: t, author: S.draft.author, votes: 0, ...noteSlot(n, board.clientWidth)});
     inp.value = ""; drawNotes();
   }
   let z = 1;
@@ -854,12 +896,13 @@ function sketchView(key, ratio){
   return box;
 }
 function rPersona(){
-  const c = C(), d2 = S.mode === "plg2";
+  const c = C(), d2 = isD2();
   if (d2 && !S.pers.frust) S.pers.frust = S.d2.chosen;
   const rail = railWrap("persona",
-    h("p", {}, c.refresher ? "Bob is your end-user. Sketch him, or a producer-manager like him, and capture what you know." : "Draw a picture of, name and describe one person who would greatly benefit if you solve your team’s " + (d2 ? "chosen pain point" : "problem") + ". Stick figures are fine – but have fun with it!"),
+    h("p", {}, c.refresher ? "Bob is your end-user. Sketch him, or a producer-manager like him, and capture what you know." : "Draw a picture of, name and describe one person who would greatly benefit if you solve your team’s " + (S.mode === "plg2" ? "chosen pain point" : "problem") + ". Stick figures are fine – but have fun with it!"),
     d2 ? h("div", {class: "ask"}, "Think: who is really struggling with this?!") : null,
-    h("p", {class: "muted"}, "Use a pen or your finger on the canvas. Then answer the questions on the right."));
+    h("p", {class: "muted"}, "Use a pen or your finger on the canvas. Then answer the questions on the right."),
+    S.mode === "sey" ? seyContext() : null);
   const f = (label, key, ph, area) => h("div", {},
     h("label", {class: "label"}, label),
     h(area ? "textarea" : "input", {class: "input", placeholder: ph, value: S.pers[key], oninput: e => { S.pers[key] = e.target.value; }}));
@@ -876,15 +919,15 @@ function rPersona(){
 /* ---------- stage 4: problem statement ---------- */
 function rProblem(){
   const c = C();
-  if (S.mode === "plg2") syncNeeds();
+  if (isD2()) syncNeeds();
   const rail = railWrap("problem",
-    h("p", {}, S.mode === "plg2" ? "Review and add detail to the definition of your person’s problem." : "Pull together what you learned. Tap the needs and feelings that fit, or add your own, and watch the statement build."),
-    S.mode === "plg2" ? h("p", {class: "muted"}, "Tap the needs and feelings that fit, or add more, and watch your problem statement build.") : null,
+    h("p", {}, isD2() ? "Review and add detail to the definition of your person’s problem." : "Pull together what you learned. Tap the needs and feelings that fit, or add your own, and watch the statement build."),
+    isD2() ? h("p", {class: "muted"}, "Tap the needs and feelings that fit, or add more, and watch your problem statement build.") : null,
     h("h3", {}, "The framework"),
-    h("p", {class: "muted"}, S.mode === "plg2" ? "[Persona] hates it that [pain point] and needs a way to [needs] in a way that makes them feel [motivators]." : "[Persona] hates it that [pain point] and needs a way to [need] in a way that helps them feel [motivator]."),
-    h("p", {class: "muted"}, S.mode === "plg2" ? "Needs come from your pain points and persona profile. Feelings and motivators are your design principles – what would be ideal?" : "Needs come from your pain points. Feelings come from your design principles."));
+    h("p", {class: "muted"}, isD2() ? "[Persona] hates it that [pain point] and needs a way to [needs] in a way that makes them feel [motivators]." : "[Persona] hates it that [pain point] and needs a way to [need] in a way that helps them feel [motivator]."),
+    h("p", {class: "muted"}, isD2() ? "Needs come from your pain points and persona profile. Feelings and motivators are your design principles – what would be ideal?" : "Needs come from your pain points. Feelings come from your design principles."));
   prefillD2();
-  if (S.mode === "plg2"){
+  if (isD2()){
     const ul = arr => h("ul", {class: "muted"}, arr.map(t => h("li", {}, t)));
     const lab = t => h("p", {class: "label", style: "margin:.7rem 0 .1rem"}, t);
     rail.push(h("h3", {}, "Problem Statement Example"),
@@ -897,13 +940,13 @@ function rProblem(){
   const span = (t, ph) => t && t.trim() ? h("span", {class: "fill"}, t) : h("span", {class: "blank"}, ph);
   function drawStmt(){
     prev.replaceChildren(span(S.lead, "[persona]"), ", hates it that ", span(S.focusText, "[pain point]"),
-      " and needs a way to ", span(S.needs.join("; "), "[needs]"), MOT(), span(S.feelings.join(S.mode === "plg2" ? "; " : ", "), "[motivators]"), ".");
+      " and needs a way to ", span(S.needs.join("; "), "[needs]"), MOT(), span(S.feelings.join(isD2() ? "; " : ", "), "[motivators]"), ".");
   }
   const chipSet = (opts, sel, key) => {
     const box = h("div", {class: "chips"});
     const own = h("input", {class: "input", placeholder: "Add your own", style: "max-width:18rem;min-height:2.9rem",
       onkeydown: e => { if (e.key === "Enter") addOwn(); }});
-    function addOwn(){ const t = own.value.trim(); if (!t) return; if (opts === "needOpts" && S.mode === "plg2"){ S.needCustom = S.needCustom || []; S.needCustom.push(t); } S[opts].push(t); S[sel].push(t); own.value = ""; draw(); drawStmt(); }
+    function addOwn(){ const t = own.value.trim(); if (!t) return; if (opts === "needOpts" && isD2()){ S.needCustom = S.needCustom || []; S.needCustom.push(t); } S[opts].push(t); S[sel].push(t); own.value = ""; draw(); drawStmt(); }
     function draw(){
       box.replaceChildren(...S[opts].map(o => h("button", {class: "chip", "aria-pressed": String(S[sel].includes(o)),
         onclick: () => { S[sel] = S[sel].includes(o) ? S[sel].filter(x => x !== o) : [...S[sel], o]; draw(); drawStmt(); }}, o)), own,
@@ -916,17 +959,17 @@ function rProblem(){
     h("div", {class: "two"},
       h("div", {}, h("label", {class: "label"}, "Who is it? (edit freely)"),
         h("textarea", {class: "input", value: S.lead, oninput: e => { S.lead = e.target.value; drawStmt(); }})),
-      h("div", {}, h("label", {class: "label"}, S.mode === "plg2" ? "Pain point is (from your group’s choice)" : "Pain point (from your pinned note)"),
-        h("textarea", {class: "input", placeholder: S.mode === "plg2" ? "Choose a pain point on the problem focus step, or type here" : "Pin a note on the pain points step, or type here", value: S.focusText, oninput: e => { S.focusText = e.target.value; drawStmt(); }}))),
+      h("div", {}, h("label", {class: "label"}, isD2() ? "Pain point is (from your group’s choice)" : "Pain point (from your pinned note)"),
+        h("textarea", {class: "input", placeholder: S.mode === "sey" ? "Choose one on the “I hate it when…” steps, or type here" : isD2() ? "Choose a pain point on the problem focus step, or type here" : "Pin a note on the pain points step, or type here", value: S.focusText, oninput: e => { S.focusText = e.target.value; drawStmt(); }}))),
     h("div", {}, h("p", {class: "label"}, "Needs a way to…"), chipSet("needOpts", "needs")),
-    h("div", {}, h("p", {class: "label"}, S.mode === "plg2" ? "In a way that makes them feel…" : "In a way that helps them feel…"), chipSet("feelOpts", "feelings"))
+    h("div", {}, h("p", {class: "label"}, isD2() ? "In a way that makes them feel…" : "In a way that helps them feel…"), chipSet("feelOpts", "feelings"))
   ];
   return {rail, work, after: drawStmt};
 }
 
 /* ---------- stage 5: analogy ---------- */
 function rAnalogy(){
-  const c = C(), d2 = S.mode === "plg2";
+  const c = C(), d2 = isD2();
   const rail = railWrap("analogy",
     h("p", {}, d2 ? "Step away from your team’s chosen problem. Think about the sort of things you love." : "Step away from law for a moment. Think about the sort of things you love."),
     h("ol", {},
@@ -973,7 +1016,7 @@ function rAnalogy(){
     const addSlot = () => { S.attrSlots.push(""); draw(); const ins = list.querySelectorAll("input"); ins[ins.length - 1].focus(); };
     work.push(h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.7rem"},
       (c.analogies.includes(S.analogy)
-        ? h("h3", {style: "font-family:var(--serif);margin:0;font-size:1.4rem"}, "We love " + S.analogy + " because it…")
+        ? h("h3", {style: "font-family:var(--serif);margin:0;font-size:1.4rem"}, "We love " + S.analogy.replace(/^A /, "a ") + " because it…")
         : h("div", {}, h("label", {class: "label"}, "Name your great thing"), h("input", {class: "input", value: S.analogy, oninput: e => { S.analogy = e.target.value; S.otherName = e.target.value; }}))),
       count, prog, list,
       h("div", {}, h("button", {class: "btn quiet", onclick: addSlot}, "Add another attribute"))));
@@ -1146,7 +1189,7 @@ const SAMPLE_POOL = {
   talent: ["the path to partnership feels opaque and political"],
   client: ["firms are very inconsistent in how open they are about their use of AI"]
 };
-function MOT(){ return S.mode === "plg2" ? " in a way that makes them feel " : " in a way that helps them feel "; }
+function MOT(){ return isD2() ? " in a way that makes them feel " : " in a way that helps them feel "; }
 const splitItems = t => [...new Set(String(t || "").split(/[\n,]+/).map(x => x.trim()).filter(Boolean))];
 /* needs offered on the Framing page come from "What do they want or need?" on the End User page (commas or line breaks make separate items) */
 function syncNeeds(){
@@ -1154,8 +1197,8 @@ function syncNeeds(){
   (S.needCustom || []).forEach(c => { if (!opts.includes(c)) opts.push(c); });
   S.needOpts = opts; S.needs = S.needs.filter(n => opts.includes(n));
 }
-function stmtText(){ return [S.lead || "[persona]", ", hates it that ", S.focusText || "[pain point]", ", and needs a way to ", S.needs.join("; ") || "[needs]", MOT(), S.feelings.join(S.mode === "plg2" ? "; " : ", ") || "[motivators]", "."].join(""); }
-function prefillD2(){ if (S.mode === "plg2" && !S.lead && S.pers.name) S.lead = S.pers.name + (S.pers.role ? ", " + S.pers.role : ""); }
+function stmtText(){ return [S.lead || "[persona]", ", hates it that ", S.focusText || "[pain point]", ", and needs a way to ", S.needs.join("; ") || "[needs]", MOT(), S.feelings.join(isD2() ? "; " : ", ") || "[motivators]", "."].join(""); }
+function prefillD2(){ if (isD2() && !S.lead && S.pers.name) S.lead = S.pers.name + (S.pers.role ? ", " + S.pers.role : ""); }
 const lines = t => t.split("\n").map(x => x.trim()).filter(Boolean);
 
 function rD2Focus(){
@@ -1313,6 +1356,183 @@ function fillD2(){
   S.stage = 0;
 }
 
+/* ---------- Seyfarth in the Future ---------- */
+const seyChallenge = () => { const m = S.team.members[S.sey.chosen]; return m ? (m.challenge || "").trim() : ""; };
+const seyHmw = () => { const t = (S.sey.hmw || "").trim(); return t.length > 16 ? t : ""; };
+function seyContext(){
+  const ch = seyChallenge(), hm = seyHmw();
+  return [
+    ch ? [h("p", {class: "label", style: "margin:.9rem 0 .1rem"}, "Our challenge"), h("p", {class: "muted", style: "margin:0"}, ch)] : null,
+    hm ? [h("p", {class: "label", style: "margin:.7rem 0 .1rem"}, "Our problem"), h("p", {style: "margin:0;font-family:var(--serif);font-size:1.1rem;line-height:1.35"}, hm)] : null
+  ];
+}
+
+function rSeyChallenge(){
+  const rail = railWrap("challenge",
+    h("p", {}, "Take 5 minutes as a team to share and review the challenges you each identified as you reflected on the week’s learning. Then choose ONE of these challenges to work on in this workshop."),
+    h("div", {class: "ask"}, "The challenge we will work on today is…"),
+    h("p", {class: "muted"}, "Type each person’s challenge (1 or 2 sentences), then tap “Work on this one” on the one you choose."));
+  const banner = h("div", {class: "banner"});
+  function drawChosen(){ const t = seyChallenge(); banner.style.display = t ? "block" : "none"; banner.textContent = "The challenge we will work on today is: " + t; }
+  const cards = S.team.members.map((m, i) => {
+    const on = S.sey.chosen === i;
+    return h("div", {class: "member", style: "--c:" + MEMBER_COLORS[i] + (on ? ";outline:4px solid var(--brand);outline-offset:3px" : "")},
+      h("label", {class: "label"}, "Team member " + (i + 1)),
+      h("input", {class: "input", placeholder: "Name", value: m.name, oninput: e => { m.name = e.target.value; }}),
+      h("label", {class: "label"}, "The challenge I’d like to see addressed is…"),
+      h("textarea", {class: "input", style: "min-height:9rem", placeholder: "A firm or practice area challenge (client-related or people/talent-related) to address in the next 6-12 months", value: m.challenge || "", oninput: e => { m.challenge = e.target.value; if (on) drawChosen(); }}),
+      h("button", {class: "btn sm" + (on ? " primary" : ""), onclick: () => { S.sey.chosen = on ? null : i; render(); }}, on ? "★ Our challenge" : "Work on this one"),
+      S.team.members.length > 2 ? h("button", {class: "btn sm quiet", onclick: () => {
+        S.team.members.splice(i, 1);
+        if (S.sey.chosen === i) S.sey.chosen = null; else if (S.sey.chosen > i) S.sey.chosen--;
+        if (S.draft.author >= S.team.members.length) S.draft.author = 0;
+        render(); }}, "Remove") : null);
+  });
+  return {rail, work: [banner, h("div", {class: "members", style: "grid-template-columns:repeat(auto-fit,minmax(14.5rem,1fr))"}, cards),
+    S.team.members.length < 6 ? h("div", {}, h("button", {class: "btn quiet", onclick: () => { S.team.members.push({name: "", talent: ""}); render(); }}, "Add a teammate")) : null], after: drawChosen};
+}
+
+function rSeyHate(){
+  const rail = railWrap("hate",
+    h("p", {}, "Individually, think about your team’s chosen challenge and describe three sources of frustration or pain points with respect to it. Start each one with “I hate it when…” or “I hate it that…”."),
+    h("h3", {}, "For example"),
+    h("ul", {},
+      h("li", {}, "“I hate it that we never take enough time to connect with partners serving similar clients to brainstorm about how to collaborate and generate new work”"),
+      h("li", {}, "“I hate it that I spend a lot of time coaching and caring for associates, but it does not seem like it matters in how I am rewarded or appreciated at the firm”")),
+    seyContext(),
+    h("p", {class: "muted"}, "Notes stay hidden while everyone writes. When you’re all done, reveal them and take turns sharing."),
+    h("button", {class: "btn" + (S.sey.revealed ? "" : " primary"), onclick: () => { S.sey.revealed = !S.sey.revealed; render(); }}, S.sey.revealed ? "Hide the notes again" : "Everyone’s done: reveal the notes"));
+  const b = buildBoard({
+    stem: "I hate it that…", placeholder: "I hate it that… (pick who you are, tap, then type)",
+    focusLabel: "The one we’ll work on:", editable: false, hidden: () => !S.sey.revealed,
+    list: () => S.notes, setList: a => { S.notes = a; },
+    getText: () => S.focusText, setText: v => { S.focusText = v; },
+    isPinned: n => S.focusId === n.id, pinOff: "☆ Choose", pinOn: "★ Chosen",
+    pin: n => { S.focusId = n.id; S.focusText = n.text; S.d2.chosen = n.text; S.pers.frust = S.pers.frust || n.text; },
+    onDelete: n => { if (S.focusId === n.id){ S.focusId = null; S.focusText = ""; } }
+  });
+  return {rail, work: b.nodes, after: b.after};
+}
+
+function rSeyHmw(){
+  const rail = railWrap("hmw",
+    h("p", {}, "As a team, discuss and then choose ONE of the “I hate it when’s/that’s” that you all agree really needs to be solved more effectively, and that you will work on today."),
+    h("p", {}, "Describe the agreed problem using “How might we…”."),
+    h("h3", {}, "For example"),
+    h("div", {class: "ask"}, "How might we find a way to share more effectively across practice groups that are serving the same industries?"),
+    seyContext());
+  if (!S.sey.hmw) S.sey.hmw = "How might we… ";
+  const ch = seyChallenge();
+  const notes = S.notes.map(n => h("button", {class: "pick", "aria-pressed": String(S.focusId === n.id), onclick: () => { S.focusId = n.id; S.focusText = n.text; S.d2.chosen = n.text; render(); }},
+    h("span", {class: "dot", style: "background:" + MEMBER_COLORS[n.author % MEMBER_COLORS.length] + ";margin-right:.5rem"}), h("span", {style: "opacity:.7"}, "I hate it that "), n.text));
+  const work = [
+    ch ? h("div", {class: "board-card"}, h("label", {class: "label"}, "Our challenge"), h("p", {style: "margin:0;font-family:var(--serif);font-size:1.2rem"}, ch)) : null,
+    h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, "What we heard"),
+      notes.length ? notes : h("p", {class: "muted"}, "No “I hate it when…” notes yet. Go back one step to add some.")),
+    h("div", {class: "board-card"}, h("label", {class: "label"}, "Our “I hate it when” problem is:"),
+      h("textarea", {class: "input", style: "min-height:6.5rem;font-family:var(--serif);font-size:1.35rem", placeholder: "How might we…", value: S.sey.hmw, oninput: e => { S.sey.hmw = e.target.value; }}))
+  ];
+  return {rail, work};
+}
+
+function rSeyIndividual(){
+  const rail = railWrap("individual",
+    h("p", {}, "Review your problem statement, your persona chart and the list of attributes of the great thing you chose. Now, quietly and on your own, brainstorm ideas about how you might use one or more of those attributes to solve your team’s problem."),
+    h("p", {}, "Aim for at least three ideas. Then move to the Group Brainstorm on the next page."),
+    seyContext());
+  return {rail, work: [shareoutGrid({ideas: false})]};
+}
+
+function rSeyMatrix(){
+  const M = S.sey.matrix;
+  const rail = railWrap("priority",
+    h("p", {}, "Use this matrix to take your 3-4 best ideas and place them accordingly."),
+    h("ol", {}, h("li", {}, "Add each of your best directional ideas from the group brainstorm."), h("li", {}, "Drag each one onto the matrix: how easy is it to do, and how much impact would it have?")),
+    h("p", {class: "muted"}, "Ideas in the top-left corner are the easier, higher-impact wins."),
+    seyContext());
+  const author = h("div", {class: "row"}, S.team.members.map((m, i) =>
+    h("button", {class: "chip who", "aria-pressed": String(S.draft.author === i), onclick: () => { S.draft.author = i; author.querySelectorAll(".chip").forEach((b, j) => b.setAttribute("aria-pressed", String(S.draft.author === j))); }},
+      h("span", {class: "dot", style: "background:" + MEMBER_COLORS[i]}), mName(i))));
+  const inp = h("input", {class: "input", placeholder: "Type an idea (a few words), then Add", style: "flex:1;min-width:14rem", onkeydown: e => { if (e.key === "Enter") add(); }});
+  const board = h("div", {class: "mx"});
+  const G = 0.8;
+  const where = n => {
+    const cy = n.y + 0.05, cx = n.x + 0.07;
+    if (cy > G) return "Not placed yet";
+    return (cx < 0.5 ? "Easier to do" : "Harder to do") + " · " + (cy < G / 2 ? "higher impact" : "lower impact");
+  };
+  function add(){
+    const t = inp.value.trim(); if (!t) return;
+    const k = M.length;
+    M.push({id: uid(), text: t, author: S.draft.author, x: 0.02 + (k % 6) * 0.16, y: 0.83});
+    inp.value = ""; draw(); inp.focus();
+  }
+  let z = 1;
+  function draw(){
+    board.replaceChildren(
+      h("div", {class: "mx-grid"},
+        h("div", {class: "mx-q", style: "background:var(--s2)"}, "Easier to do & higher impact"),
+        h("div", {class: "mx-q", style: "background:var(--s3)"}, "Harder to do & higher impact"),
+        h("div", {class: "mx-q", style: "background:var(--slate)"}, "Easier to do & lower impact"),
+        h("div", {class: "mx-q", style: "background:var(--surface)"}, "Harder to do & lower impact")),
+      h("div", {class: "mx-tray"}, "Ideas waiting to be placed: drag each one up onto the matrix"));
+    if (!M.length) board.append(h("div", {class: "empty", style: "top:0;height:80%"}, "Add your 3-4 best ideas above, then drag them onto the matrix."));
+    M.forEach(n => {
+      const q = h("p", {class: "q"}, where(n));
+      const x = h("button", {class: "x", "aria-label": "Delete idea", onclick: e => { e.stopPropagation(); S.sey.matrix = S.sey.matrix.filter(m => m !== n); M.length = 0; M.push(...S.sey.matrix); draw(); }}, "✕");
+      const el = h("div", {class: "mx-note has-x", style: "left:" + n.x * 100 + "%;top:" + n.y * 100 + "%;--c:" + STICKY[n.author % 4]}, x, h("p", {}, n.text), q);
+      let sx, sy, ox, oy, drag = false, r;
+      el.addEventListener("pointerdown", e => {
+        if (e.target.closest("button")) return;
+        drag = true; r = board.getBoundingClientRect(); sx = e.clientX; sy = e.clientY; ox = n.x; oy = n.y;
+        el.setPointerCapture(e.pointerId); el.style.zIndex = ++z; el.style.cursor = "grabbing";
+      });
+      el.addEventListener("pointermove", e => {
+        if (!drag) return;
+        n.x = Math.max(0, Math.min(1 - el.offsetWidth / r.width, ox + (e.clientX - sx) / r.width));
+        n.y = Math.max(0, Math.min(1 - el.offsetHeight / r.height, oy + (e.clientY - sy) / r.height));
+        el.style.left = n.x * 100 + "%"; el.style.top = n.y * 100 + "%";
+        q.textContent = where({x: n.x + (el.offsetWidth / r.width / 2 - 0.07), y: n.y + (el.offsetHeight / r.height / 2 - 0.05)});
+      });
+      const end = () => { drag = false; el.style.cursor = "grab"; };
+      el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+      board.append(el);
+    });
+  }
+  const composer = h("div", {class: "composer"}, h("div", {class: "row"}, author, inp, h("button", {class: "btn primary", onclick: add}, "Add idea")));
+  return {rail, work: [composer, board], after: draw};
+}
+
+function fillSey(){
+  S = freshState("sey");
+  const T = S.team;
+  T.members = [
+    {name: "Alex", challenge: "Partners in different practice groups serve the same industries but rarely share what they know, so clients get siloed service."},
+    {name: "Jordan", challenge: "Strong senior associates leave because the path to partnership feels unclear."},
+    {name: "Casey", challenge: "Our pitch process is slow, and good ideas for clients get lost between practices."},
+    {name: "Sam", challenge: "Partners spend too much time on administration and not enough with clients."}];
+  S.sey.chosen = 0; S.sey.revealed = true;
+  const hate = ["we never take the time to compare notes on clients we share across practices", "I hear about a colleague’s work for my client from the client, not from my colleague", "there’s no easy way to see who at the firm knows a given industry", "good cross-selling ideas die because no one owns the follow-up"];
+  S.notes = hate.map((t, i) => ({id: uid(), text: t, author: i % 4, votes: 0, ...noteSlot(i)}));
+  S.focusId = S.notes[2].id; S.focusText = S.notes[2].text; S.d2.chosen = S.focusText;
+  S.sey.hmw = "How might we make it easy to see who at the firm knows which industries, and to share what we know across practices?";
+  const wants = ["find the right colleague for a client in minutes", "see what the firm has already done in her client’s industry", "hear about overlapping work before the client does"];
+  const feels = ["connected to the partners who serve her clients", "confident she is giving clients the firm’s best", "proud to be part of one firm"];
+  S.pers = {name: "Dana", role: "a labor and employment partner, 9 years at the firm", tenure: "", frust: [hate[0], hate[2]].join("\n"), wants: wants.join("\n")};
+  S.lead = "Dana, a labor and employment partner, 9 years at the firm";
+  S.needOpts = [...wants]; S.feelOpts = [...feels]; S.needCustom = [];
+  S.needs = [wants[0], wants[1]]; S.feelings = [feels[0]];
+  S.analogy = "A great coffee shop"; S.analogyKey = "A great coffee shop"; S.attrs = ATTRS["A great coffee shop"].slice(0, 4);
+  S.drawing = sampleDrawing({bubble: "Who knows?"}); S.padAspect.drawing = 1000 / 640;
+  S.whiteboard = sampleBoard([["1. Regulars List", "a profile that shows who knows which industries", "#a51c30"], ["2. Usual Order", "a one-page brief on any shared client", "#2563c4"], ["3. Loyalty Card", "credit for partners who bring others in", "#4b7f3a"]]); S.padAspect.whiteboard = 1800 / 700;
+  S.sey.matrix = [
+    {id: uid(), text: "Regulars List", author: 0, x: 0.06, y: 0.1},
+    {id: uid(), text: "Usual Order brief", author: 1, x: 0.3, y: 0.22},
+    {id: uid(), text: "Loyalty Card credit", author: 2, x: 0.62, y: 0.1},
+    {id: uid(), text: "Firm-wide industry map", author: 3, x: 0.6, y: 0.55}];
+  S.stage = 0;
+}
+
 /* ---------- Facilitator (admin) demo: #admin ---------- */
 const T_ = ["the path to partnership feels opaque and political", "flexibility is offered on paper but counts against them at promotion time", "they spend more time on admin and billing than on the legal work they trained for", "there’s no real mentorship once you’re past year three", "they can’t see how their work connects to the firm’s strategy", "feedback comes once a year, long after it could help"];
 const C_ = ["firms are very inconsistent in how open they are about their use of AI", "they can’t predict what a matter will cost until the bill arrives", "they re-explain their business every time a new lawyer joins the matter", "they get a long memo when they needed a clear recommendation", "they can’t tell how a matter is going without asking", "every firm bills and staffs differently, so comparing is hard"];
@@ -1358,6 +1578,7 @@ const DEMO = [
 const VERSIONS = [
   {id: "plg2", mode: "plg2", live: true, name: "Potomac Law Group · Day 2", org: "Potomac Law Group", blurb: "Pulling it all together. Groups start from a Day 1 pain point, define the problem, borrow from something they love and pitch an idea."},
   {id: "plg", mode: "plg", live: false, name: "Potomac Law Group · Day 1", org: "Potomac Law Group", blurb: "Looking for market gaps: the pain points of talented lawyers and of clients and buyers of legal services."},
+  {id: "sey", mode: "sey", live: false, name: "Seyfarth in the Future", org: "Seyfarth Shaw LLP", blurb: "Partners bring a firm or practice challenge from their individual reflections. Teams choose one, frame the problem, borrow from something they love and prioritize their best ideas."},
   {id: "omv", mode: "omv", live: false, name: "O’Melveny", org: "O’Melveny", blurb: "How might we energize and support entrepreneurism among our partners? Teams pick a partner persona and design for it."},
   {id: "bob", mode: "bob", live: false, name: "Bob Anderson case", org: "Leadership in Law Firms", blurb: "Design a solution that would surprise and delight Bob Anderson, the rainmaking practice group leader."}
 ];
