@@ -1,12 +1,13 @@
 // Storage + facilitator API for the Potomac Law Group workshop.
 // Runs as a Netlify Function (v2 syntax) and keeps data in Netlify Blobs.
 //
-//   GET  /api/ping
+//   GET  /api/ping                       also reports which workshop version is active (version, or null)
 //   GET  /api/admin/groups               facilitator: list groups + progress     (x-admin-pin header)
 //   PUT  /api/admin/config               facilitator: save group setup           (x-admin-pin header)
 //   GET  /api/admin/groups/:id           facilitator: one group, with drawings   (x-admin-pin header)
 //   DELETE /api/admin/groups/:id         facilitator: remove a group AND its saved work (x-admin-pin header)
 //   POST /api/admin/reset                facilitator: erase everything (new session)    (x-admin-pin header)
+//   PUT  /api/admin/version              facilitator: choose the workshop version        (x-admin-pin header)
 //   GET  /api/groups/:id?k=KEY           group: setup + saved work               (group key)
 //   PUT  /api/groups/:id/state?k=KEY     group: save work                        (group key)
 //   GET  /api/groups/:id/img/:name?k=KEY group: saved drawing / whiteboard       (group key)
@@ -32,7 +33,13 @@ const isId = (v) => /^\d{1,3}$/.test(String(v));
 const clip = (v, n) => String(v ?? "").slice(0, n);
 const newKey = () => crypto.randomUUID().replace(/-/g, "").slice(0, 8);
 
+// Workshop versions that run live (saved work, group links, facilitator view).
+// To make another version live, add its id here AND set live: true in the page's VERSIONS list.
+const LIVE_VERSIONS = new Set(["plg2"]);
+
 const readConfig = async (s) => (await s.get("config", { type: "json" })) || { groups: [] };
+// The active version. A session saved before the picker existed has groups but no version: that was Potomac Day 2.
+const versionOf = (cfg) => cfg.version || (cfg.groups && cfg.groups.length ? "plg2" : null);
 
 const summary = (st) =>
   st
@@ -53,7 +60,11 @@ export default async (req) => {
   const method = req.method;
   const s = store();
 
-  if (parts[0] === "ping") return json({ ok: true, adminConfigured: !!env("ADMIN_PIN") });
+  if (parts[0] === "ping") {
+    let version = null;
+    try { version = versionOf(await readConfig(s)); } catch {}
+    return json({ ok: true, adminConfigured: !!env("ADMIN_PIN"), version });
+  }
 
   /* ---------------- facilitator routes ---------------- */
   if (parts[0] === "admin") {
@@ -69,7 +80,19 @@ export default async (req) => {
           return { id: g.id, key: g.key, talent: g.talent, client: g.client, state: summary(st) };
         })
       );
-      return json({ groups });
+      return json({ groups, version: versionOf(cfg) });
+    }
+
+    if (parts[1] === "version" && parts.length === 2 && method === "PUT") {
+      let body;
+      try { body = JSON.parse(await req.text()); } catch { return fail(400, "Invalid JSON."); }
+      const version = body && body.version;
+      if (!LIVE_VERSIONS.has(version)) return fail(400, "That version can’t run live yet.");
+      const cfg = await readConfig(s);
+      const current = versionOf(cfg);
+      if (current && current !== version && cfg.groups.length) return fail(409, "Start a new session to change the version.");
+      await s.setJSON("config", { ...cfg, groups: cfg.groups, version, updatedAt: Date.now() });
+      return json({ version });
     }
 
     if (parts[1] === "config" && parts.length === 2 && method === "PUT") {
@@ -80,6 +103,8 @@ export default async (req) => {
       const incoming = Array.isArray(body.groups) ? body.groups.slice(0, 60) : [];
       const seen = new Set();
       const old = await readConfig(s);
+      const version = versionOf(old);
+      if (incoming.length && !version) return fail(409, "Choose a workshop version first.");
       const groups = [];
       for (const g of incoming) {
         if (!isId(g.id) || seen.has(String(g.id))) continue;
@@ -89,7 +114,7 @@ export default async (req) => {
         groups.push({ id: Number(g.id), key, talent: clip(g.talent, 600), client: clip(g.client, 600) });
       }
       groups.sort((a, b) => a.id - b.id);
-      await s.setJSON("config", { groups, updatedAt: Date.now() });
+      await s.setJSON("config", { groups, version, updatedAt: Date.now() });
       return json({ groups });
     }
 
@@ -108,14 +133,14 @@ export default async (req) => {
       const id = parts[2];
       const cfg = await readConfig(s);
       cfg.groups = cfg.groups.filter((x) => String(x.id) !== id);
-      await s.setJSON("config", { ...cfg, updatedAt: Date.now() });
+      await s.setJSON("config", { ...cfg, version: versionOf(cfg), updatedAt: Date.now() });
       await Promise.all([s.delete(`group/${id}`), s.delete(`img/${id}/drawing`), s.delete(`img/${id}/whiteboard`)]);
       return json({ ok: true });
     }
 
     if (parts[1] === "reset" && parts.length === 2 && method === "POST") {
       await s.deleteAll();
-      await s.setJSON("config", { groups: [], updatedAt: Date.now() });
+      await s.setJSON("config", { groups: [], version: null, updatedAt: Date.now() });
       return json({ ok: true });
     }
     return fail(404, "Not found.");
