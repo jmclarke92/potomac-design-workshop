@@ -25,3 +25,10 @@ Notes
 - Group links contain a secret key. Anyone with a group's link can edit that group's work.
 - Data lives in Netlify Blobs. To start fresh for a new session, remove the groups in the facilitator view
   and add them again, or delete the store in Netlify (Project > Blobs).
+
+Workshop versions (facilitator picker)
+- After "Start new session" erases everything, the facilitator view opens on a picker. Pick the version you are running.
+- Live versions save work and use group links. Versions marked "Demo only" link out to a one-screen demo (public/index.html#demo=<id>).
+- You can change the version only while no groups exist. Otherwise use "Start new session" first.
+- To add a version: add it to VERSIONS in public/index.html; when it is live, also add its id to LIVE_VERSIONS in netlify/functions/api.mjs.
+- A session saved before the picker existed counts as Potomac Day 2, so nothing needs migrating.
