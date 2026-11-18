@@ -29,7 +29,14 @@ Notes
 Workshop versions (facilitator picker)
 - After "Start new session" erases everything, the facilitator view opens on a picker. Pick the version you are running.
 - Live versions save work and use group links. Versions marked "Demo only" link out to a one-screen demo (public/index.html#demo=<id>).
-- Seyfarth in the Future is a demo-only version for now (#demo=sey). Its stages follow the Seyfarth workbook: challenge, I hate it when, How might we, persona, problem statement, great thing, individual and group brainstorm, prioritization matrix.
+- Seyfarth in the Future runs live (pick it in the facilitator view). Its stages follow the Seyfarth workbook: Our Challenge, I Hate It When, How Might We, End User, Problem Statement, Analogy Finding, Individual and Group Brainstorm, Prioritization, and a Report Out summary.
+
+Seyfarth setup and running (5-10 groups)
+1. Facilitator view -> choose Seyfarth -> pick how many groups (5-10), then type each group's names (one per line) or paste a whole roster ("Name, group number" per line). Names must be unique across the room.
+2. Worksheet QR: the "Worksheet QR" button shows one code for the whole room (it opens /me). Download the image and put it on the worksheet. Participants scan it, tap their name, and type their challenge, with an optional second one. A name that isn't on the list can add itself to a group. The facilitator view shows a check mark beside everyone who has entered a challenge.
+3. Send each Hub its group link (Links button). The group's Our Challenge screen opens with the names and challenges already filled in. They can still edit anything, add a teammate and remove teammates. Challenges entered while a group is on that first screen appear within a few seconds.
+4. Report Out: each group's last step, and the facilitator's Present button, show a one-screen summary: end user, problem statement, directional ideas, and where the ideas fall on the matrix. The facilitator view has a Full screen button for the share-out.
+- The phone page only lists names and who is "in". Challenge text goes only to that group's own Hub (and the facilitator view).
 - You can change the version only while no groups exist. Otherwise use "Start new session" first.
 - To add a version: add it to VERSIONS in public/index.html; when it is live, also add its id to LIVE_VERSIONS in netlify/functions/api.mjs.
 - A session saved before the picker existed counts as Potomac Day 2, so nothing needs migrating.

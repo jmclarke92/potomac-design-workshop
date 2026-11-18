@@ -6,3 +6,9 @@
 
 [functions]
   directory = "netlify/functions"
+
+# Worksheet QR page (Seyfarth): /me opens public/me.html
+[[redirects]]
+  from = "/me"
+  to = "/me.html"
+  status = 200
