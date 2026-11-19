@@ -79,6 +79,12 @@ button{cursor:pointer;touch-action:manipulation}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
 .btn.quiet{border-style:dashed;color:var(--muted)}
+.btn.locked{opacity:.55}
+.btn.bounce::after{content:" \2192"}
+.btn.bounce{animation:nudge .9s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(.55rem)}}
+@media (prefers-reduced-motion:reduce){.btn.bounce{animation:none}}
+.gatemsg{display:none;background:var(--brand-soft);border:2px solid var(--brand);color:var(--brand-text);border-radius:.8rem;padding:.6rem 1rem;font-weight:700;font-size:1.1rem;margin:.5rem 0}
 .btn.sm{min-height:2.6rem;padding:0 .9rem;font-size:.95rem}
 .input{width:100%;min-height:3.3rem;padding:.6rem .9rem;border:2px solid var(--line);border-radius:.7rem;background:var(--surface);font-size:1.1rem}
 .input:focus,.btn:focus-visible,.chip:focus-visible,.tile:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
@@ -476,7 +482,7 @@ function freshState(mode){
     pitch: {key: "", idea: "", why: "", matter: ""},
     drawing: null, pen: "#1f1c1b", eraser: false,
     drawing2: null, whiteboard: null, maxStage: 0, imgRev: {}, stickies: {whiteboard: []}, padAspect: {}, shapes: {drawing: [], drawing2: [], whiteboard: []}, attrSlots: null, attrStore: {}, analogyKey: null, otherName: "",
-    sey: {v: 2, chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}},
+    sey: {v: 2, drew: false, chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}},
     d2: {pool: {talent: [], client: []}, chosen: "", kind: "", ideas: [], shown: false, drawer: false},
     plg: {who: 0, talent: [], talentPin: null, talentAgreed: "", talentShown: false, client: [], clientPin: null, clientAgreed: "", clientShown: false, gap: ""}
   };
@@ -537,7 +543,50 @@ function railWrap(i, ...nodes){
     ...nodes
   ];
 }
+/* Seyfarth checkpoints: the team can't move forward until these are done */
+const SEY_GATES = {
+  challenge: () => S.sey.chosen != null && !!seyChallenge(),
+  hate: () => !!S.focusId && S.notes.some(n => n.id === S.focusId),
+  persona: () => !!S.sey.drew,
+  group: () => (S.sey.ideas || []).filter(i => i.sel).length >= 3
+};
+const SEY_GATE_MSG = {
+  challenge: "Choose your team’s challenge to continue. Tap “Work on this one” under it.",
+  hate: "Tap the “I hate it when” statement your team chose to continue.",
+  persona: "Don’t forget to draw their picture!",
+  group: "Be sure to choose at least 3!"
+};
+const gateBox = () => h("div", {id: "gate-msg", class: "gatemsg", role: "alert"});
+function firstBlocked(from, to){
+  if (S.mode !== "sey") return -1;
+  for (let k = from; k < to; k++){ const g = SEY_GATES[STG()[k].id]; if (g && !g()) return k; }
+  return -1;
+}
+function showGate(k){
+  const msg = SEY_GATE_MSG[STG()[k].id], el = document.getElementById("gate-msg");
+  if (!el){ toast(msg); return; }
+  el.textContent = msg; el.style.display = "block";
+  el.scrollIntoView({block: "nearest", behavior: "smooth"});
+}
+/* grey out Next while the checkpoint isn't met; once it is, hide the warning and nudge Next with a bouncing arrow */
+function refreshNext(){
+  const nb = $("#b-next"); if (!nb) return;
+  let locked = false, ready = false;
+  if (S.mode === "sey"){
+    const cur = STG()[S.stage], g = cur && SEY_GATES[cur.id];
+    if (g){ if (g()){ ready = true; const m = document.getElementById("gate-msg"); if (m) m.style.display = "none"; } else locked = true; }
+  }
+  nb.classList.toggle("locked", locked); nb.classList.toggle("bounce", ready);
+  nb.setAttribute("aria-disabled", String(locked));
+}
 function go(i){
+  i = Math.max(0, Math.min(STG().length - 1, i));
+  const blocked = i > S.stage ? firstBlocked(S.stage, i) : -1;
+  if (blocked !== -1){
+    if (blocked !== S.stage){ saveSketch(); S.stage = blocked; render(); window.scrollTo(0, 0); }
+    showGate(blocked);
+    return;
+  }
   saveSketch();
   S.stage = Math.max(0, Math.min(STG().length - 1, i));
   render();
@@ -564,6 +613,7 @@ function render(){
   $("#b-next").style.display = last ? "none" : "";
   if (!last) $("#b-next").textContent = "Next: " + STG()[S.stage + 1].short;
   setChromeVar();
+  refreshNext();
 }
 $("#b-back").onclick = () => go(S.stage - 1);
 $("#b-next").onclick = () => go(S.stage + 1);
@@ -830,7 +880,7 @@ function sketchPad(key, opts){
   const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
   cv.addEventListener("pointerdown", e => {
     if (e.pointerType === "touch"){ touches.set(e.pointerId, {y: e.clientY}); if (touches.size >= 2){ if (down){ down = false; saveSketch(); } pan = {y: midY()}; return; } }
-    sel = null; mark(); down = true; cv.setPointerCapture(e.pointerId); [lx, ly] = pt(e); ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over"; ctx.fillStyle = S.pen; ctx.beginPath(); ctx.arc(lx, ly, S.eraser ? 18 : 2.5, 0, 6.3); ctx.fill();
+    sel = null; mark(); down = true; if (key === "drawing" && S.mode === "sey" && !S.eraser && !S.sey.drew){ S.sey.drew = true; refreshNext(); } cv.setPointerCapture(e.pointerId); [lx, ly] = pt(e); ctx.globalCompositeOperation = S.eraser ? "destination-out" : "source-over"; ctx.fillStyle = S.pen; ctx.beginPath(); ctx.arc(lx, ly, S.eraser ? 18 : 2.5, 0, 6.3); ctx.fill();
   });
   cv.addEventListener("pointermove", e => {
     if (e.pointerType === "touch" && touches.has(e.pointerId)){ touches.set(e.pointerId, {y: e.clientY}); if (pan){ const my = midY(); window.scrollBy(0, pan.y - my); pan.y = my; return; } }
@@ -861,7 +911,7 @@ function sketchPad(key, opts){
         h("button", {class: "btn sm", onclick: () => addShape("square")}, "■ Square")] : null,
       opts.stickies ? h("div", {class: "row", style: "gap:.3rem;margin:0 .4rem"}, h("span", {style: "font-weight:700"}, "Sticky note"),
         [0, 1, 2, 3].map(c => h("button", {class: "stkbtn", style: "background:" + STICKY[c], "aria-label": "Add sticky note", onclick: () => addSticky(c)}, "+"))) : null,
-      h("button", {class: "btn sm quiet", onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); S[key] = null; S.shapes[key] = []; sel = null; drawShapes(); }}, "Clear drawing")),
+      h("button", {class: "btn sm quiet", onclick: () => { ctx.clearRect(0, 0, cv.width, cv.height); S[key] = null; S.shapes[key] = []; sel = null; drawShapes(); if (key === "drawing" && S.mode === "sey"){ S.sey.drew = false; refreshNext(); } }}, "Clear drawing")),
     opts.fill ? h("div", {class: "muted", style: "font-size:.9rem"}, "Draw with one finger or the pen. To scroll the page, drag with two fingers.") : null);
   drawShapes(); drawStickies();
   const wrap = h("div", {class: "canvaswrap" + (fill ? " fill" : "")}, tools, h("div", {class: "padstage"}, cv, layer, stkLayer));
@@ -902,7 +952,7 @@ function rPersona(){
     h("label", {class: "label"}, label),
     h(area ? "textarea" : "input", {class: "input", placeholder: ph, value: S.pers[key], oninput: e => { S.pers[key] = e.target.value; }}));
   const work = [h("div", {class: "persona-grid"},
-    sketchPad("drawing", sey ? {plain: true} : undefined),
+    sey ? h("div", {}, sketchPad("drawing", {plain: true}), gateBox()) : sketchPad("drawing"),
     h("div", {style: "display:flex;flex-direction:column;gap:.7rem"},
       f("Name (e.g. John G. Cee)", "name", "Give them a name"),
       f("Role, background, years in their role", "role", "e.g. a general counsel at a manufacturer, in role 5 years, formerly a law firm partner"),
@@ -1410,7 +1460,7 @@ function rSeyChallenge(){
         if (S.draft.author >= S.team.members.length) S.draft.author = 0;
         render(); }}, "Remove") : null);
   });
-  return {rail, work: [banner, h("div", {class: "members", style: "grid-template-columns:repeat(auto-fit,minmax(15.5rem,1fr))"}, cards),
+  return {rail, work: [gateBox(), banner, h("div", {class: "members", style: "grid-template-columns:repeat(auto-fit,minmax(15.5rem,1fr))"}, cards),
     S.team.members.length < MAX_TEAM ? h("div", {}, h("button", {class: "btn quiet", onclick: () => { S.team.members.push({name: "", talent: ""}); render(); }}, "Add a teammate")) : null], after: drawChosen};
 }
 
@@ -1439,11 +1489,12 @@ function rSeyHate(){
         if (S.focusId === n.id){ S.focusId = null; S.focusText = ""; S.d2.chosen = ""; }
         draw(); }}, "✕")))
       : [h("p", {class: "muted"}, "Nothing added yet. Type one above and tap Add.")]));
+    refreshNext();
   }
   const composer = h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.6rem"},
     h("label", {class: "label"}, "I hate it that…"),
     h("div", {class: "row"}, inp, h("button", {class: "btn primary", onclick: add}, "Add")));
-  return {rail, work: [composer, h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, "Our list: tap the one you choose as a team to work on today."), list)], after: draw};
+  return {rail, work: [gateBox(), composer, h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, "Our list: tap the one you choose as a team to work on today."), list)], after: draw};
 }
 
 /* Problem statement: each input box fills from the earlier pages, can be edited freely, and sits beside the matching part of the Jane example */
@@ -1509,6 +1560,7 @@ function rSeyGroup(){
   function draw(){
     const n = D.ideas.filter(i => i.sel).length;
     count.textContent = n ? n + " chosen. Your chosen ideas appear on the matrix on the next page." : "Tap your best 3-4 ideas. They will appear on the matrix on the next page.";
+    setTimeout(refreshNext, 0);
     list.replaceChildren(...(D.ideas.length ? D.ideas.map(i => h("div", {style: "display:flex;gap:.5rem;align-items:flex-start;margin-bottom:.6rem"},
       h("button", {class: "pick", style: "margin:0;flex:1;width:auto", "aria-pressed": String(!!i.sel), onclick: () => { i.sel = !i.sel; draw(); }}, i.text),
       h("button", {class: "btn sm quiet", "aria-label": "Delete", onclick: () => { D.ideas = D.ideas.filter(x => x !== i); draw(); }}, "✕")))
@@ -1517,7 +1569,7 @@ function rSeyGroup(){
   const composer = h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.6rem"},
     h("label", {class: "label"}, "An idea…"),
     h("div", {class: "row"}, inp, h("button", {class: "btn primary", onclick: add}, "Add")));
-  return {rail, work: [composer, h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .3rem"}, "Our ideas: tap your best 3-4"), count, list)], after: draw};
+  return {rail, work: [composer, h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .3rem"}, "Our ideas: tap your best 3-4"), count, gateBox(), list)], after: draw};
 }
 
 const MAX_TEAM = 8;
@@ -1652,7 +1704,7 @@ function fillSey(){
   S.sey.stm = {pain: S.pers.frust, needs: [wants[0], wants[1]].join("\n"), feel: feels[0], srcPain: S.pers.frust, srcNeeds: S.pers.wants};
   seyApplyStm();
   S.analogy = "A great coffee shop"; S.analogyKey = "A great coffee shop"; S.attrs = ATTRS["A great coffee shop"].slice(0, 4);
-  S.drawing = sampleDrawing({bubble: "Who knows?"}); S.padAspect.drawing = 1000 / 640;
+  S.drawing = sampleDrawing({bubble: "Who knows?"}); S.padAspect.drawing = 1000 / 640; S.sey.drew = true;
   const ideaTexts = ["Regulars List: a profile that shows who knows which industries", "Usual Order: a one-page brief on any shared client", "Loyalty Card: credit for partners who bring others in", "Firm-wide industry map", "A weekly coffee hour for shared clients"];
   S.sey.ideas = ideaTexts.map((t, i) => ({id: uid(), text: t, sel: i < 4}));
   const pos = [[0.06, 0.1], [0.3, 0.22], [0.62, 0.1], [0.6, 0.55]];
@@ -2298,7 +2350,7 @@ function applySnapshot(st, snap){
   st.shapes = Object.assign({drawing: [], drawing2: [], whiteboard: []}, st.shapes);
   st.stickies = Object.assign({whiteboard: []}, st.stickies);
   st.padAspect = st.padAspect || {}; st.imgRev = st.imgRev || {}; st.attrStore = st.attrStore || {};
-  if (st.mode === "sey"){ st.sey = Object.assign({v: 2, chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}}, st.sey); st.notes = st.notes || []; }
+  if (st.mode === "sey"){ st.sey = Object.assign({v: 2, drew: false, chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}}, st.sey); st.notes = st.notes || []; }
 }
 function setStatus(kind){
   const el = document.querySelector(".nav .note-s"); if (!el || !LV.on) return;
