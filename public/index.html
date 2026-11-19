@@ -476,7 +476,7 @@ function freshState(mode){
     pitch: {key: "", idea: "", why: "", matter: ""},
     drawing: null, pen: "#1f1c1b", eraser: false,
     drawing2: null, whiteboard: null, maxStage: 0, imgRev: {}, stickies: {whiteboard: []}, padAspect: {}, shapes: {drawing: [], drawing2: [], whiteboard: []}, attrSlots: null, attrStore: {}, analogyKey: null, otherName: "",
-    sey: {chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}},
+    sey: {v: 2, chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}},
     d2: {pool: {talent: [], client: []}, chosen: "", kind: "", ideas: [], shown: false, drawer: false},
     plg: {who: 0, talent: [], talentPin: null, talentAgreed: "", talentShown: false, client: [], clientPin: null, clientAgreed: "", clientShown: false, gap: ""}
   };
@@ -546,6 +546,7 @@ function go(i){
 }
 function render(){
   S.maxStage = Math.max(S.maxStage || 0, S.stage);
+  S.stage = Math.max(0, Math.min(STG().length - 1, S.stage || 0));
   const st = STG()[S.stage];
   $("#subtitle").textContent = C().subtitle + (S.groupNo ? " · Group " + S.groupNo : "") + (demoId() ? " · Demo, not saved" : "");
   $("#stage").classList.toggle("wide", !!st.full);
@@ -2285,11 +2286,19 @@ function liveSnapshot(){
 }
 function applySnapshot(st, snap){
   LIVE_KEYS.forEach(k => { if (snap[k] !== undefined && snap[k] !== null) st[k] = snap[k]; });
+  /* Seyfarth lost its Problem Reframing step: work saved under the older 10-step layout shifts up one place after step 3 */
+  if (st.mode === "sey" && snap.sey && snap.sey.v !== 2){
+    if ((st.stage || 0) >= 3) st.stage--;
+    if ((st.maxStage || 0) >= 3) st.maxStage--;
+  }
+  const last = (STAGES_BY[st.mode] || STAGES_BY.bob).length - 1;
+  st.stage = Math.max(0, Math.min(last, Number(st.stage) || 0));
+  st.maxStage = Math.max(0, Math.min(last, Number(st.maxStage) || 0));
   if (snap.d2){ st.d2.chosen = snap.d2.chosen || ""; st.d2.kind = snap.d2.kind || ""; }
   st.shapes = Object.assign({drawing: [], drawing2: [], whiteboard: []}, st.shapes);
   st.stickies = Object.assign({whiteboard: []}, st.stickies);
   st.padAspect = st.padAspect || {}; st.imgRev = st.imgRev || {}; st.attrStore = st.attrStore || {};
-  if (st.mode === "sey"){ st.sey = Object.assign({chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}}, st.sey); st.notes = st.notes || []; }
+  if (st.mode === "sey"){ st.sey = Object.assign({v: 2, chosen: null, pick: 1, hmw: "", matrix: [], removed: [], seeded: false, ideas: [], stm: {pain: null, needs: null, feel: "", srcPain: "", srcNeeds: ""}}, st.sey); st.notes = st.notes || []; }
 }
 function setStatus(kind){
   const el = document.querySelector(".nav .note-s"); if (!el || !LV.on) return;
