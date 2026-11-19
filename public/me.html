@@ -86,23 +86,18 @@ details summary{cursor:pointer;font-weight:700;padding:.4rem 0}
       <p>What is the challenge you’d like to see addressed? This is the one from your worksheet: a firm or practice area challenge (client-related or people/talent-related) to address in the next 6-12 months. One or two sentences is plenty.</p>
       <div class="card">
         <div><label for="c1">The challenge I’d like to see addressed is…</label><textarea id="c1" maxlength="500"></textarea></div>
-        <div id="second"><button class="btn quiet" type="button" id="add2">+ Add a 2nd option</button></div>
         <p class="err" id="err"></p>
         <div class="row"><button class="btn primary" type="button" id="save">Save</button><button class="btn quiet" type="button" id="back">Not me</button></div>
         ${me.done ? '<p class="muted">Saving again replaces what you entered before.</p>' : ""}
       </div>`;
     app.querySelector("#back").onclick = () => pick();
-    app.querySelector("#add2").onclick = () => {
-      app.querySelector("#second").innerHTML = '<label for="c2">A second option I’d like to see addressed is…</label><textarea id="c2" maxlength="500" style="min-height:7rem" placeholder="Optional"></textarea>';
-      app.querySelector("#c2").focus();
-    };
     app.querySelector("#save").onclick = async () => {
-      const c1 = app.querySelector("#c1").value.trim(), c2el = app.querySelector("#c2"), c2 = c2el ? c2el.value.trim() : "";
+      const c1 = app.querySelector("#c1").value.trim();
       const err = app.querySelector("#err");
       if (!c1){ err.textContent = "Type your challenge first."; return; }
       const btn = app.querySelector("#save"); btn.disabled = true; err.textContent = "";
       try {
-        await call("PUT", {name: me.name, group: extraGroup || undefined, challenges: [c1, c2].filter(Boolean)});
+        await call("PUT", {name: me.name, group: extraGroup || undefined, challenges: [c1]});
         const mine = people.find(p => norm(p.name) === norm(me.name)); if (mine) mine.done = true; else people.push({name: me.name, done: true});
         app.innerHTML = `<div class="card thanks"><div class="big">✔</div><h1>Your challenge is in</h1><p>It will be waiting on your team’s screen. Nothing else to do here.</p><button class="btn" type="button" id="again">Someone else, or edit mine</button></div>`;
         app.querySelector("#again").onclick = () => pick();

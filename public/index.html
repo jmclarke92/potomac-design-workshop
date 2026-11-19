@@ -149,6 +149,7 @@ textarea.input{min-height:5.5rem;resize:none;line-height:1.35}
 .pc .hint{font-size:.9rem;color:var(--muted);margin:0}
 .canvaswrap{background:var(--surface);border:2px solid var(--line);border-radius:1.1rem;padding:.7rem}
 canvas.sketch{display:block;width:100%;aspect-ratio:25/16;background:#fff repeating-linear-gradient(0deg,transparent 0 31px,#e6e1d8 31px 32px);border-radius:.6rem;touch-action:none;cursor:crosshair}
+canvas.sketch.plain{background:#fff}
 .swatch{width:2.3rem;height:2.3rem;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 2px var(--line);padding:0}
 .swatch[aria-pressed="true"]{box-shadow:0 0 0 4px var(--brand)}
 .pick{display:block;width:100%;text-align:left;min-height:4rem;padding:.8rem 1rem;border:2px solid var(--line);background:var(--surface);border-radius:.9rem;margin-bottom:.6rem;font-size:1.05rem;line-height:1.35}
@@ -509,7 +510,7 @@ STAGES_BY.plg2 = [
 STAGES_BY.sey = [
   {id: "challenge", short: "Our Challenge", phase: "Choose your challenge", title: "Choose Your Team’s Challenge", mins: 5, render: rSeyChallenge},
   {id: "hate", short: "I Hate It When", phase: "Problem finding", title: "I Hate It When…", mins: 5, render: rSeyHate},
-  {id: "hmw", short: "How Might We", phase: "Problem finding", title: "Group Sharing and Problem Finding", mins: 10, render: rSeyHmw},
+  {id: "hmw", short: "Problem Reframing", phase: "Problem finding", title: "Problem Reframing", mins: 10, render: rSeyHmw},
   {id: "persona", short: "End User", phase: "Empathize and define", title: "End-User Persona", mins: 10, render: rPersona},
   {id: "problem", short: "Problem Statement", phase: "Empathize and define", title: "Develop Your Problem Statement", mins: 10, render: rProblem},
   {id: "analogy", short: "Analogy Finding", phase: "Ideation", title: "Analogy Finding", mins: 7, render: rAnalogy},
@@ -728,7 +729,7 @@ function placeShape(el, sh){ el.style.left = sh.x * 100 + "%"; el.style.top = sh
 function sketchPad(key, opts){
   opts = opts || {};
   const fill = !!opts.fill;
-  const cv = h("canvas", {class: "sketch" + (fill ? " fill" : ""), width: fill ? 1800 : 1000, height: fill ? 700 : 640});
+  const cv = h("canvas", {class: "sketch" + (fill ? " fill" : "") + (opts.plain ? " plain" : ""), width: fill ? 1800 : 1000, height: fill ? 700 : 640});
   pads = [{cv, key}];
   S.shapes[key] = S.shapes[key] || [];
   S.padAspect[key] = cv.width / cv.height;
@@ -885,15 +886,17 @@ function sketchView(key, ratio){
 function rPersona(){
   const c = C(), d2 = isD2();
   if (d2 && !S.pers.frust) S.pers.frust = S.d2.chosen;
+  const sey = S.mode === "sey";
   const rail = railWrap("persona",
-    h("p", {}, S.mode === "sey" ? "Show us your impact! Draw a picture of a particular end-user who would greatly benefit if you solve your team’s problem. Name them, tell us who they are at the firm, how they experience the challenge and what they want or need. Stick figure drawings are fine – but have fun with it!" : c.refresher ? "Bob is your end-user. Sketch him, or a producer-manager like him, and capture what you know." : "Draw a picture of, name and describe one person who would greatly benefit if you solve your team’s " + (S.mode === "plg2" ? "chosen pain point" : "problem") + ". Stick figures are fine – but have fun with it!"),
-    d2 ? h("div", {class: "ask"}, "Think: who is really struggling with this?!") : null,
+    sey && d2 ? h("div", {class: "ask"}, "Think: who is really struggling with this?!") : null,
+    h("p", {}, S.mode === "sey" ? "Draw a picture of a particular end-user who would greatly benefit if you solve your team’s problem. Name them, tell us who they are at the firm, how they experience the challenge and what they want or need. Stick figure drawings are fine – but have fun with it!" : c.refresher ? "Bob is your end-user. Sketch him, or a producer-manager like him, and capture what you know." : "Draw a picture of, name and describe one person who would greatly benefit if you solve your team’s " + (S.mode === "plg2" ? "chosen pain point" : "problem") + ". Stick figures are fine – but have fun with it!"),
+    d2 && !sey ? h("div", {class: "ask"}, "Think: who is really struggling with this?!") : null,
     h("p", {class: "muted"}, "Use a pen or your finger on the canvas. Then answer the questions on the right."));
   const f = (label, key, ph, area) => h("div", {},
     h("label", {class: "label"}, label),
     h(area ? "textarea" : "input", {class: "input", placeholder: ph, value: S.pers[key], oninput: e => { S.pers[key] = e.target.value; }}));
   const work = [h("div", {class: "persona-grid"},
-    sketchPad("drawing"),
+    sketchPad("drawing", sey ? {plain: true} : undefined),
     h("div", {style: "display:flex;flex-direction:column;gap:.7rem"},
       f("Name (e.g. John G. Cee)", "name", "Give them a name"),
       f("Role, background, years in their role", "role", "e.g. a general counsel at a manufacturer, in role 5 years, formerly a law firm partner"),
@@ -1347,7 +1350,7 @@ function fillD2(){
 
 /* ---------- Seyfarth in the Future ---------- */
 const normName = s => (s || "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
-const seyChallenge = () => { const m = S.team.members[S.sey.chosen]; return m ? ((S.sey.pick === 2 ? m.challenge2 : m.challenge) || "").trim() : ""; };
+const seyChallenge = () => { const m = S.team.members[S.sey.chosen]; return m ? (m.challenge || "").trim() : ""; };
 const seyHmw = () => { const t = (S.sey.hmw || "").trim(); return t.length > 16 ? t : ""; };
 
 /* Pre-arranged groups: the roster names and the challenges people entered on the worksheet QR page load into the
@@ -1357,7 +1360,7 @@ function seyMerge(setup){
   const T = S.team, D = S.sey; let changed = false;
   D.removed = D.removed || [];
   if (!D.seeded){
-    T.members = T.members.filter(m => (m.name || "").trim() || (m.challenge || "").trim() || (m.challenge2 || "").trim());
+    T.members = T.members.filter(m => (m.name || "").trim() || (m.challenge || "").trim());
     D.seeded = true; changed = true;
   }
   setup.forEach(p => {
@@ -1365,13 +1368,12 @@ function seyMerge(setup){
     const c = p.challenges || [], at = p.at || 0;
     let m = T.members.find(x => normName(x.name) === normName(p.name));
     if (!m){
-      T.members.push({name: p.name, talent: "", challenge: c[0] || "", challenge2: c[1] || "", qrAt: at, qrC1: c[0] || "", qrC2: c[1] || ""});
+      T.members.push({name: p.name, talent: "", challenge: c[0] || "", qrAt: at, qrC1: c[0] || ""});
       changed = true; return;
     }
     if (at && at !== (m.qrAt || 0)){
       if (!(m.challenge || "").trim() || m.challenge === (m.qrC1 || "")) m.challenge = c[0] || m.challenge || "";
-      if (!(m.challenge2 || "").trim() || m.challenge2 === (m.qrC2 || "")) m.challenge2 = c[1] || m.challenge2 || "";
-      m.qrAt = at; m.qrC1 = c[0] || ""; m.qrC2 = c[1] || ""; changed = true;
+      m.qrAt = at; m.qrC1 = c[0] || ""; changed = true;
     }
   });
   while (T.members.length < 2) T.members.push({name: "", talent: ""});
@@ -1386,18 +1388,15 @@ function rSeyChallenge(){
   const banner = h("div", {class: "banner"});
   function drawChosen(){ const t = seyChallenge(); banner.style.display = t ? "block" : "none"; banner.textContent = "The challenge we will work on today is: " + t; }
   const cards = S.team.members.map((m, i) => {
-    const block = n => {
-      const on = S.sey.chosen === i && (S.sey.pick || 1) === n, key = n === 2 ? "challenge2" : "challenge";
-      return h("div", {style: "display:flex;flex-direction:column;gap:.45rem" + (on ? ";outline:4px solid var(--brand);outline-offset:3px;border-radius:.4rem" : "")},
-        h("label", {class: "label"}, n === 2 ? "A second option I’d like to see addressed is…" : "The challenge I’d like to see addressed is…"),
-        h("textarea", {class: "input", style: "min-height:" + (m.challenge2 || m._two ? "7rem" : "9rem"), placeholder: n === 2 ? "Optional" : "A firm or practice area challenge (client-related or people/talent-related) to address in the next 6-12 months", value: m[key] || "", oninput: e => { m[key] = e.target.value; if (on) drawChosen(); }}),
-        h("button", {class: "btn sm" + (on ? " primary" : ""), onclick: () => { if (on) S.sey.chosen = null; else { S.sey.chosen = i; S.sey.pick = n; } render(); }}, on ? "★ Our challenge" : "Work on this one"));
-    };
+    const on = S.sey.chosen === i;
+    const block = h("div", {style: "display:flex;flex-direction:column;gap:.45rem" + (on ? ";outline:4px solid var(--brand);outline-offset:3px;border-radius:.4rem" : "")},
+      h("label", {class: "label"}, "The challenge I’d like to see addressed is…"),
+      h("textarea", {class: "input", style: "min-height:9rem", placeholder: "A firm or practice area challenge (client-related or people/talent-related) to address in the next 6-12 months", value: m.challenge || "", oninput: e => { m.challenge = e.target.value; if (on) drawChosen(); }}),
+      h("button", {class: "btn sm" + (on ? " primary" : ""), onclick: () => { S.sey.chosen = on ? null : i; render(); }}, on ? "★ Our challenge" : "Work on this one"));
     return h("div", {class: "member", style: "--c:" + MEMBER_COLORS[i % MEMBER_COLORS.length]},
       h("label", {class: "label"}, "Team member " + (i + 1)),
       h("input", {class: "input", placeholder: "Name", value: m.name, oninput: e => { m.name = e.target.value; }}),
-      block(1),
-      (m.challenge2 || m._two) ? block(2) : h("button", {class: "btn sm quiet", onclick: () => { m._two = true; render(); }}, "+ Add a 2nd option"),
+      block,
       S.team.members.length > 2 ? h("button", {class: "btn sm quiet", onclick: () => {
         const D = S.sey; D.removed = D.removed || []; if (normName(m.name)) D.removed.push(normName(m.name));
         S.team.members.splice(i, 1);
@@ -1412,36 +1411,49 @@ function rSeyChallenge(){
 function rSeyHate(){
   const rail = railWrap("hate",
     h("p", {}, "On paper first, and on your own: think about your team’s chosen challenge and brainstorm as many sources of frustration or pain points with respect to it as you can. Start each one with “I hate it when…” or “I hate it that…”."),
-    h("p", {}, "Then add them to the board on this screen: pick who you are, then type."),
+    h("p", {}, "Then add them on this screen so the whole team can see them."),
+    h("p", {}, "As a team, discuss and choose ONE of them that you all agree really needs to be solved more effectively, and that you will work on today. Tap it to choose it."),
     h("h3", {}, "For example"),
     h("ul", {},
       h("li", {}, "“I hate it that we never take enough time to connect with partners serving similar clients to brainstorm about how to collaborate and generate new work”"),
       h("li", {}, "“I hate it that I spend a lot of time coaching and caring for associates, but it does not seem like it matters in how I am rewarded or appreciated at the firm”")));
-  const b = buildBoard({
-    stem: "I hate it that…", placeholder: "I hate it that… (pick who you are, then type)",
-    noFocus: true, noPin: true,
-    list: () => S.notes, setList: a => { S.notes = a; },
-    getText: () => S.focusText, setText: v => { S.focusText = v; },
-    isPinned: () => false,
-    onDelete: n => { if (S.focusId === n.id){ S.focusId = null; S.focusText = ""; S.d2.chosen = ""; } }
-  });
-  return {rail, work: b.nodes, after: b.after};
+  const inp = h("textarea", {class: "input", rows: 2, style: "flex:1;min-width:14rem;min-height:3.4rem", placeholder: "Finish the sentence… (Enter to add)",
+    onkeydown: e => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); add(); } }});
+  const list = h("div", {});
+  function add(){
+    const t = inp.value.trim(); if (!t) return;
+    S.notes.push({id: uid(), text: t, author: 0, votes: 0});
+    inp.value = ""; draw(); inp.focus();
+  }
+  function draw(){
+    list.replaceChildren(...(S.notes.length ? S.notes.map(n => h("div", {style: "display:flex;gap:.5rem;align-items:flex-start;margin-bottom:.6rem"},
+      h("button", {class: "pick", style: "margin:0;flex:1;width:auto", "aria-pressed": String(S.focusId === n.id), onclick: () => { S.focusId = n.id; S.focusText = n.text; S.d2.chosen = n.text; draw(); }},
+        h("span", {style: "opacity:.7"}, "I hate it that "), n.text),
+      h("button", {class: "btn sm quiet", "aria-label": "Delete", onclick: () => {
+        S.notes = S.notes.filter(x => x !== n);
+        if (S.focusId === n.id){ S.focusId = null; S.focusText = ""; S.d2.chosen = ""; }
+        draw(); }}, "✕")))
+      : [h("p", {class: "muted"}, "Nothing added yet. Type one above and tap Add.")]));
+  }
+  const composer = h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.6rem"},
+    h("label", {class: "label"}, "I hate it that…"),
+    h("div", {class: "row"}, inp, h("button", {class: "btn primary", onclick: add}, "Add")));
+  return {rail, work: [composer, h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, "Our list: tap one to choose it"), list)], after: draw};
 }
 
 function rSeyHmw(){
   const rail = railWrap("hmw",
-    h("p", {}, "As a team, discuss and then choose ONE of the “I hate it when’s/that’s” that you all agree really needs to be solved more effectively, and that you will work on today."),
-    h("p", {}, "Rephrase your agreed pain point into an opportunity using “how might we…”."),
+    h("p", {}, "Rephrase the “I hate it when” statement your team chose into an opportunity using “how might we…”."),
     h("h3", {}, "For example"),
     h("div", {class: "ask"}, "How might we find a way to share more effectively across practice groups that are serving the same industries?"));
   if (!S.sey.hmw) S.sey.hmw = "How might we… ";
   const ch = seyChallenge();
-  const notes = S.notes.map(n => h("button", {class: "pick", "aria-pressed": String(S.focusId === n.id), onclick: () => { S.focusId = n.id; S.focusText = n.text; S.d2.chosen = n.text; render(); }},
-    h("span", {class: "dot", style: "background:" + MEMBER_COLORS[n.author % MEMBER_COLORS.length] + ";margin-right:.5rem"}), h("span", {style: "opacity:.7"}, "I hate it that "), n.text));
   const work = [
     ch ? h("div", {class: "board-card"}, h("label", {class: "label"}, "Our challenge"), h("p", {style: "margin:0;font-family:var(--serif);font-size:1.2rem"}, ch)) : null,
-    h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, "What we heard"),
-      notes.length ? notes : h("p", {class: "muted"}, "No “I hate it when…” notes yet. Go back one step to add some.")),
+    h("div", {class: "board-card"}, h("label", {class: "label"}, "Our “I hate it when” statement"),
+      S.focusText && S.focusText.trim()
+        ? h("p", {style: "margin:0;font-family:var(--serif);font-size:1.2rem"}, "I hate it that " + S.focusText.trim())
+        : h("p", {class: "muted", style: "margin:0"}, "Go back one step and tap the one your team chose.")),
     h("div", {class: "board-card"}, h("label", {class: "label"}, "Our “I hate it when” problem is really “How might we…”"),
       h("textarea", {class: "input", style: "min-height:6.5rem;font-family:var(--serif);font-size:1.35rem", placeholder: "How might we…", value: S.sey.hmw, oninput: e => { S.sey.hmw = e.target.value; }}))
   ];
@@ -2155,7 +2167,7 @@ function adminQr(){
     h("h2", {style: "font-family:var(--serif);margin:0"}, "Worksheet QR code"),
     h("div", {style: "display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start"}, qrBox,
       h("div", {style: "flex:1;min-width:16rem;display:flex;flex-direction:column;gap:.6rem"},
-        h("p", {style: "margin:0;font-size:1.15rem"}, "One code for the whole room. Put it on the worksheet. People scan it, tap their own name and type the challenge they’d like to see addressed (they can add a second option)."),
+        h("p", {style: "margin:0;font-size:1.15rem"}, "One code for the whole room. Put it on the worksheet. People scan it, tap their own name and type the challenge they’d like to see addressed."),
         h("p", {class: "linkline"}, url),
         h("p", {class: "muted", style: "margin:0"}, people.length ? people.filter(p => p.done).length + " of " + people.length + " people have entered a challenge so far. This list refreshes on its own." : "Add names to the groups first. A name that isn’t on the list can still add itself to a group from the phone page."))),
     table);
