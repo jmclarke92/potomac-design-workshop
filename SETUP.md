@@ -29,7 +29,7 @@ Notes
 Workshop versions (facilitator picker)
 - After "Start new session" erases everything, the facilitator view opens on a picker. Pick the version you are running.
 - Live versions save work and use group links. Versions marked "Demo only" link out to a one-screen demo (public/index.html#demo=<id>).
-- Seyfarth in the Future runs live (pick it in the facilitator view). Its stages follow the Seyfarth workbook: Our Challenge, I Hate It When (the team chooses one), Problem Reframing, End User, Problem Statement, Analogy Finding, Individual and Group Brainstorm, Prioritization, and a Report Out summary.
+- Seyfarth in the Future runs live (pick it in the facilitator view). Its stages follow the Seyfarth workbook: Our Challenge, I Hate It When (the team chooses one), End User, Problem Statement, Analogy Finding, Individual and Group Brainstorm, Prioritization, and a Report Out summary.
 
 Seyfarth setup and running (5-10 groups)
 1. Facilitator view -> choose Seyfarth -> pick how many groups (5-10), then type each group's names (one per line) or paste a whole roster ("Name, group number" per line). Names must be unique across the room.
