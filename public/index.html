@@ -85,6 +85,9 @@ button{cursor:pointer;touch-action:manipulation}
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(.55rem)}}
 @media (prefers-reduced-motion:reduce){.btn.bounce{animation:none}}
 .gatemsg{display:none;background:var(--brand-soft);border:2px solid var(--brand);color:var(--brand-text);border-radius:.8rem;padding:.6rem 1rem;font-weight:700;font-size:1.1rem;margin:.5rem 0}
+.aibox{margin-top:.6rem}.aichips{display:flex;flex-direction:column;gap:.4rem;margin:.5rem 0}
+.aichip{text-align:left;font:inherit;font-size:1rem;line-height:1.35;padding:.55rem .8rem;border:2px dashed var(--brand);background:var(--surface);border-radius:.6rem;cursor:pointer;min-height:2.6rem}
+.aichip.used{opacity:.45;border-style:solid}.aichip:hover{background:#fff}
 .btn.sm{min-height:2.6rem;padding:0 .9rem;font-size:.95rem}
 .input{width:100%;min-height:3.3rem;padding:.6rem .9rem;border:2px solid var(--line);border-radius:.7rem;background:var(--surface);font-size:1.1rem}
 .input:focus,.btn:focus-visible,.chip:focus-visible,.tile:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
@@ -1047,8 +1050,10 @@ function rAnalogy(){
     h("div", {class: "ask"}, "What makes it great? How does it work? What need does it fill?"),
     h("p", {class: "muted"}, "The first attribute is an example to get you started. Add as many more attributes as you need."));
   const work = [];
-  const key = S.analogyKey || (S.analogy ? (c.analogies.includes(S.analogy) ? S.analogy : "Other") : null);
-  const tiles = h("div", {class: "tiles"}, [...c.analogies, "Other"].map(a =>
+  const aiA = isATL() ? (S.sey.aiA || []) : [];
+  const allA = [...c.analogies, ...aiA.map(x => x.name)];
+  const key = S.analogyKey || (S.analogy ? (allA.includes(S.analogy) ? S.analogy : "Other") : null);
+  const tiles = h("div", {class: "tiles"}, [...allA, "Other"].map(a =>
     h("button", {class: "tile" + (key && key !== a ? " dim" : ""), "aria-pressed": String(key === a),
       onclick: () => {
         if (key && S.attrSlots) S.attrStore[key] = S.attrSlots;
@@ -1059,6 +1064,29 @@ function rAnalogy(){
         render();
       }}, a === "Other" ? "Other (add your own)" : a)));
   work.push(tiles);
+  if (isATL()){
+    const box = h("div", {class: "aibox"});
+    let busy = false, failed = false;
+    const run = async () => {
+      busy = true; failed = false; drawBox();
+      const got = await aiSuggest("analogy", atlCtx());
+      busy = false;
+      if (got){ S.sey.aiA = got; render(); } else { failed = true; drawBox(); }
+    };
+    const drawBox = () => box.replaceChildren(
+      h("button", {class: "btn sm quiet", disabled: busy ? "disabled" : null, onclick: run}, busy ? "Thinking…" : aiA.length ? "✨ Suggest different ones" : "✨ Suggest great things that fit our challenge"),
+      failed ? h("p", {class: "muted", style: "margin:.4rem 0 0"}, "Suggestions aren’t available right now. Choose from the list or add your own.") : null,
+      aiA.length ? null : h("p", {class: "muted", style: "margin:.3rem 0 0;font-size:.85rem"}, AI_NOTE));
+    drawBox(); work.push(box);
+    const cur = aiA.find(x => x.name === S.analogy);
+    if (cur) work.push(h("div", {class: "board-card", style: "padding:.7rem 1rem"},
+      h("p", {style: "margin:0 0 .4rem"}, h("b", {}, "Why it fits: "), cur.why),
+      cur.attrs && cur.attrs.length ? h("div", {}, h("p", {class: "label", style: "margin:0"}, "Attributes to get you started (tap to add)"),
+        h("div", {class: "aichips"}, cur.attrs.map(t => h("button", {class: "aichip", onclick: () => {
+          const i = S.attrSlots ? S.attrSlots.findIndex(x => !x.trim()) : -1;
+          if (!S.attrSlots) S.attrSlots = [t]; else if (i >= 0) S.attrSlots[i] = t; else S.attrSlots.push(t);
+          S.attrs = S.attrSlots.map(x => x.trim()).filter(Boolean); render(); }}, t)))) : null));
+  }
   if (S.analogy){
     const ex = (ATTRS[S.analogy] || [])[0] || "";
     if (!S.attrSlots){
@@ -1084,7 +1112,7 @@ function rAnalogy(){
     }
     const addSlot = () => { S.attrSlots.push(""); draw(); const ins = list.querySelectorAll("input"); ins[ins.length - 1].focus(); };
     work.push(h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.7rem"},
-      (c.analogies.includes(S.analogy)
+      (allA.includes(S.analogy)
         ? h("h3", {style: "font-family:var(--serif);margin:0;font-size:1.4rem"}, "We love " + S.analogy.replace(/^A /, "a ") + " because it…")
         : h("div", {}, h("label", {class: "label"}, "Name your great thing"), h("input", {class: "input", value: S.analogy, oninput: e => { S.analogy = e.target.value; S.otherName = e.target.value; }}))),
       count, prog, list,
@@ -1470,6 +1498,39 @@ function seyMerge(setup){
   return changed;
 }
 
+/* ---------- AI starter suggestions (ATL only) ----------
+   Teams tap “Suggest”, a function (netlify/functions/suggest.mjs) asks an LLM, and the replies show as tappable starters
+   that copy into the box to edit. If the service is off or slow the page simply says so and carries on. */
+async function aiSuggest(kind, ctx){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 16000);
+  try {
+    const r = await fetch("/ai/suggest", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({kind, ctx}), signal: ctl.signal});
+    if (!r.ok) return null;
+    const d = await r.json(); return Array.isArray(d.items) && d.items.length ? d.items : null;
+  } catch (e) { return null; } finally { clearTimeout(t); }
+}
+const AI_NOTE = "Suggestions come from an AI service, and what your team has typed here is sent to it. Use them or ignore them.";
+function aiBox(kind, ctxFn, onPick, label){
+  if (!isATL()) return null;
+  const box = h("div", {class: "aibox"}), used = new Set();
+  let items = null, busy = false, failed = false;
+  async function run(){
+    busy = true; failed = false; draw();
+    const got = await aiSuggest(kind, ctxFn());
+    busy = false; if (got) items = got; else failed = true; draw();
+  }
+  function draw(){
+    box.replaceChildren(
+      h("button", {class: "btn sm quiet", disabled: busy ? "disabled" : null, onclick: run}, busy ? "Thinking…" : items ? "✨ More suggestions" : (label || "✨ Suggest a few starters")),
+      failed ? h("p", {class: "muted", style: "margin:.4rem 0 0"}, "Suggestions aren’t available right now. Carry on with your team’s own ideas.") : null,
+      items ? h("div", {class: "aichips"}, items.map(t => h("button", {class: "aichip" + (used.has(t) ? " used" : ""), onclick: () => { used.add(t); onPick(t); draw(); }}, t))) : null,
+      items || failed ? null : h("p", {class: "muted", style: "margin:.3rem 0 0;font-size:.85rem"}, AI_NOTE));
+  }
+  draw(); return box;
+}
+const atlCtx = () => ({challenge: seyChallenge(), pain: S.focusText || "", hmw: S.sey.hmw || "", persona: [S.lead, S.pers.name, S.pers.role].filter(Boolean)[0] || "",
+  pains: seyLines(S.sey.stm && S.sey.stm.pain), existing: S.notes.map(n => n.text)});
+
 function rSeyChallenge(){
   const rail = railWrap("challenge",
     h("p", {}, isATL() ? "Take 5 minutes as a team to share and review the AI transformation challenges you each identified in our Adaptive Leadership session, and choose ONE of these challenges to work on in this workshop." : "Take 5 minutes as a team to share and review the challenges you each identified as you reflected on the week’s learning. Then choose ONE of these challenges to work on in this workshop."),
@@ -1508,14 +1569,16 @@ function rSeyHmw(){
   const ch = seyChallenge();
   const notes = S.notes.map(n => h("button", {class: "pick", "aria-pressed": String(S.focusId === n.id), onclick: () => { S.focusId = n.id; S.focusText = n.text; S.d2.chosen = n.text; render(); }},
     h("span", {style: "opacity:.7"}, "I hate it that "), n.text));
+  const hmwTa = h("textarea", {class: "input", style: "min-height:6.5rem;font-family:var(--serif);font-size:1.35rem", placeholder: "How might we…", value: S.sey.hmw,
+    oninput: e => { S.sey.hmw = e.target.value; refreshNext(); }});
   const work = [
     gateBox(),
     ch ? h("div", {class: "board-card"}, h("label", {class: "label"}, "Our challenge"), h("p", {style: "margin:0;font-family:var(--serif);font-size:1.2rem"}, ch)) : null,
     h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, "Our list: tap the one you choose as a team to work on"),
       notes.length ? notes : h("p", {class: "muted"}, "No “I hate it when…” statements yet. Go back one step to add some.")),
     h("div", {class: "board-card"}, h("label", {class: "label"}, "Our “I hate it when” problem is “How might we…”"),
-      h("textarea", {class: "input", style: "min-height:6.5rem;font-family:var(--serif);font-size:1.35rem", placeholder: "How might we…", value: S.sey.hmw,
-        oninput: e => { S.sey.hmw = e.target.value; refreshNext(); }}))
+      hmwTa,
+      aiBox("hmw", atlCtx, t => { hmwTa.value = t; S.sey.hmw = t; refreshNext(); }, "✨ Suggest a few “How might we…” drafts"))
   ];
   return {rail, work};
 }
@@ -1552,6 +1615,7 @@ function rSeyHate(){
   const composer = h("div", {class: "board-card", style: "display:flex;flex-direction:column;gap:.6rem"},
     h("label", {class: "label"}, "I hate it that…"),
     h("div", {class: "row"}, inp, h("button", {class: "btn primary", onclick: add}, "Add")));
+  { const ai = aiBox("hate", atlCtx, t => { inp.value = t; inp.focus(); }); if (ai) composer.appendChild(ai); }
   return {rail, work: [gateBox(), composer, h("div", {}, h("h3", {style: "font-family:var(--serif);font-size:1.3rem;margin:0 0 .6rem"}, isATL() ? "Our list" : "Our list: tap the one you choose as a team to work on today."), list)], after: draw};
 }
 
@@ -1583,16 +1647,17 @@ function rSeyProblem(){
     h("p", {class: "label", style: "margin:0 0 .15rem;color:var(--slate-ink)"}, "Example problem statement: Jane"),
     h("p", {style: "margin:0;font-size:.92rem;line-height:1.4;color:var(--slate-ink)"}, jane));
   const ul = arr => h("ul", {style: "margin:.1rem 0 0;padding-left:1.2rem"}, arr.map(t => h("li", {style: "margin:.25rem 0"}, t)));
-  const row = (label, value, onin, minH, exLabel, exBody) => h("div", {class: "two", style: "align-items:start"},
-    h("div", {}, h("label", {class: "label"}, label),
-      h("textarea", {class: "input", style: "min-height:" + minH + "rem", value, oninput: e => { onin(e.target.value); drawStmt(); }})),
+  const row = (label, value, onin, minH, exLabel, exBody, ai) => { const ta = h("textarea", {class: "input", style: "min-height:" + minH + "rem", value, oninput: e => { onin(e.target.value); drawStmt(); }});
+   return h("div", {class: "two", style: "align-items:start"},
+    h("div", {}, h("label", {class: "label"}, label), ta,
+      ai ? aiBox(ai, () => Object.assign(atlCtx(), {have: seyLines(ta.value), needs: seyLines(m.needs)}), t => { ta.value = (ta.value.trim() ? ta.value.trim() + "\n" : "") + t; onin(ta.value); drawStmt(); }) : null),
     h("div", {class: "board-card", style: "background:var(--slate);border-color:transparent;padding:.7rem 1rem;color:var(--slate-ink)"},
-      h("p", {class: "label", style: "margin:0 0 .15rem"}, exLabel), exBody));
+      h("p", {class: "label", style: "margin:0 0 .15rem"}, exLabel), exBody)); };
   const work = [prev, exStmt,
     row("Your end user", S.lead, v => { S.lead = v; }, 5.5, "Example: Jane", h("p", {style: "margin:0"}, J.line)),
     row("Pain points related to your challenge", m.pain, v => { m.pain = v; seyApplyStm(); }, 9, "Example: Jane’s pain points", ul(J.pains)),
-    row("Needs a way to…", m.needs, v => { m.needs = v; seyApplyStm(); }, 9, "Example: She needs a way to", ul(J.needs)),
-    row("In a way that makes them feel…", m.feel, v => { m.feel = v; seyApplyStm(); }, 7, "Example: In a way that makes her feel", ul(J.feels))];
+    row("Needs a way to…", m.needs, v => { m.needs = v; seyApplyStm(); }, 9, "Example: She needs a way to", ul(J.needs), "needs"),
+    row("In a way that makes them feel…", m.feel, v => { m.feel = v; seyApplyStm(); }, 7, "Example: In a way that makes her feel", ul(J.feels), "feels")];
   return {rail, work, after: drawStmt};
 }
 
