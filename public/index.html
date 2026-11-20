@@ -2072,8 +2072,8 @@ function makePdf(pages){
   off[1] = pos; push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
   off[2] = pos; push("2 0 obj\n<< /Type /Pages /Kids [" + pages.map((_, i) => (3 + 3 * i) + " 0 R").join(" ") + "] /Count " + n + " >>\nendobj\n");
   pages.forEach((p, i) => {
-    const po = 3 + 3 * i, co = po + 1, io = po + 2, content = "q 792 0 0 612 0 0 cm /Im0 Do Q";
-    off[po] = pos; push(po + " 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 792 612] /Resources << /XObject << /Im0 " + io + " 0 R >> >> /Contents " + co + " 0 R >>\nendobj\n");
+    const po = 3 + 3 * i, co = po + 1, io = po + 2, ph = Math.round(792 * p.h / p.w * 100) / 100, content = "q 792 0 0 " + ph + " 0 0 cm /Im0 Do Q";
+    off[po] = pos; push(po + " 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 792 " + ph + "] /Resources << /XObject << /Im0 " + io + " 0 R >> >> /Contents " + co + " 0 R >>\nendobj\n");
     off[co] = pos; push(co + " 0 obj\n<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream\nendobj\n");
     off[io] = pos; push(io + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + p.bytes.length + " >>\nstream\n"); push(p.bytes); push("\nendstream\nendobj\n");
   });
@@ -2087,11 +2087,111 @@ function downloadBlob(blob, name){
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 5000);
 }
-const fileBase = g => "Group-" + g.id + (g.team ? "-" + g.team.replace(/[^\w]+/g, "-").replace(/^-|-$/g, "") : "");
+const fileBase = g => (A && A.version === "sey" ? "Seyfarth-" : "") + "Group-" + g.id + (g.team && typeof g.team === "string" ? "-" + g.team.replace(/[^\w]+/g, "-").replace(/^-|-$/g, "") : "");
 async function groupCanvas(g){
   let st;
   if (A.live){ if (!g._st || g._upd !== g.updatedAt) await loadFull(g); st = g._st; } else st = groupState(g);
+  if (A.version === "sey") return renderSeyCanvas(st, {no: g.id, done: seyGroupDone(g)});
   return renderResultCanvas(st, {no: g.id, done: g.step >= 7});
+}
+
+/* Seyfarth report-out as a results page: challenge, end user, problem statement and the ideas matrix.
+   Nothing is cut off or scrolled: every box grows to fit its text, and the page gets taller if it has to.
+   A numbered list under the matrix repeats every idea in full so overlapping notes are still readable. */
+async function renderSeyCanvas(st, meta){
+  try { await Promise.all(['700 40px "Literata"', '400 30px "Atkinson Hyperlegible"', '700 30px "Atkinson Hyperlegible"'].map(f => document.fonts.load(f))); } catch (e) {}
+  const img = await loadImg(st.drawing), asp = st.padAspect || {};
+  let ch = "", stmt = "";
+  { const prev = S; S = st; try { ch = seyChallenge(); stmt = stmtText(); } finally { S = prev; } }
+  const names = teamNames(st), G = MX_G, M = (st.sey && st.sey.matrix) || [];
+  const where = n => {
+    const cy = n.y + 0.05, cx = n.x + 0.07;
+    if (cy > G) return "Not placed yet";
+    return (cx < 0.5 ? "Easier to do" : "Harder to do") + " · " + (cy < G / 2 ? "higher impact" : "lower impact");
+  };
+  const QUAD = [["Easier to do & higher impact", "#d9efd0"], ["Harder to do & higher impact", "#fde0c2"], ["Easier to do & lower impact", "#d8ecf5"], ["Harder to do & lower impact", "#ffffff"]];
+  const LW = 1040, gap = 40, RW = XW - 2 * XM - gap - LW, RX = XM + LW + gap;
+  const build = (ctx, d, s, H) => {
+    if (d){
+      ctx.fillStyle = XC.bg; ctx.fillRect(0, 0, XW, H);
+      ctx.fillStyle = XC.brand; ctx.fillRect(0, 0, XW, 175);
+      ctx.textBaseline = "top"; ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.font = "400 30px " + XSANS;
+      ctx.fillText("Seyfarth in the Future · Legal Design Workshop", XM, 30);
+      ctx.fillStyle = "#fff"; ctx.font = "700 74px " + XSERIF; ctx.fillText("Group " + meta.no, XM, 78);
+      ctx.textAlign = "right"; ctx.font = "700 56px " + XSERIF; ctx.fillText("Report Out", XW - XM, 62);
+      if (!meta.done){ ctx.font = "400 28px " + XSANS; ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.fillText("Work in progress", XW - XM, 128); }
+      ctx.textAlign = "left";
+    }
+    let y = 205;
+    if (names.length) y = xText(ctx, "Team: " + names.join(", "), XM, y, XW - 2 * XM, {size: 34, weight: "700", draw: d}) + 14;
+    if (ch){
+      const txt = "Our challenge: " + ch, bw = XW - 2 * XM, tb = xText(ctx, txt, XM + 28, y + 20, bw - 56, {size: 36, font: XSERIF, draw: false});
+      if (d){ ctx.fillStyle = XC.soft; ctx.strokeStyle = XC.brand; ctx.lineWidth = 3; xRound(ctx, XM, y, bw, tb - y + 20, 22); ctx.fill(); ctx.stroke(); xText(ctx, txt, XM + 28, y + 20, bw - 56, {size: 36, font: XSERIF, draw: true}); }
+      y = tb + 20 + 26;
+    }
+    const top = y;
+    const persona = (dd, x, yy, w) => {
+      let by = xText(ctx, "Our End User" + (st.pers.name ? ": " + st.pers.name : ""), x, yy, w, {size: 38 * s, font: XSERIF, weight: "700", draw: dd}) + 12 * s;
+      const dw = 500 * s, dh = dw / (asp.drawing || 1000 / 640);
+      if (dd){
+        ctx.fillStyle = "#fff"; ctx.strokeStyle = XC.line; ctx.lineWidth = 3; ctx.fillRect(x, by, dw, dh); ctx.strokeRect(x, by, dw, dh);
+        if (img) ctx.drawImage(img, x, by, dw, dh);
+        else { ctx.fillStyle = XC.muted; ctx.font = "400 " + 26 * s + "px " + XSERIF; ctx.textBaseline = "top"; ctx.fillText("No drawing yet", x + 24 * s, by + dh / 2 - 14 * s); }
+      }
+      const rb = st.pers.role ? xText(ctx, st.pers.role, x + dw + 30 * s, by, w - dw - 30 * s, {size: 30 * s, weight: "700", draw: dd}) : by;
+      const ly = Math.max(by + dh, rb) + 22 * s, colW = (w - 40 * s) / 2; let bl = ly, br = ly;
+      if (st.pers.frust){ const t = xText(ctx, "Pain points", x, ly, colW, {size: 28 * s, weight: "700", draw: dd}) + 6 * s; bl = xBullets(ctx, lines(st.pers.frust), x, t, colW, 25 * s, dd); }
+      if (st.pers.wants){ const t = xText(ctx, "Wants and needs", x + colW + 40 * s, ly, colW, {size: 28 * s, weight: "700", draw: dd}) + 6 * s; br = xBullets(ctx, lines(st.pers.wants), x + colW + 40 * s, t, colW, 25 * s, dd); }
+      return Math.max(bl, br);
+    };
+    const problem = (dd, x, yy, w) => {
+      const t = xText(ctx, "Our Problem Statement", x, yy, w, {size: 36 * s, font: XSERIF, weight: "700", draw: dd}) + 10 * s;
+      return xText(ctx, stmt, x, t, w, {size: 34 * s, font: XSERIF, lh: 1.4, draw: dd});
+    };
+    const matrix = (dd, x, yy, w) => {
+      let by = xText(ctx, "Our directional ideas matrix", x, yy, w, {size: 36 * s, font: XSERIF, weight: "700", draw: dd}) + 14 * s;
+      const bh = 780 * s;
+      if (dd){
+        QUAD.forEach((q, i) => {
+          const qx = x + (i % 2) * w / 2, qy = by + Math.floor(i / 2) * bh / 2;
+          ctx.fillStyle = q[1]; ctx.fillRect(qx, qy, w / 2, bh / 2); ctx.strokeStyle = XC.line; ctx.lineWidth = 3; ctx.strokeRect(qx, qy, w / 2, bh / 2);
+          xText(ctx, q[0], qx + 18 * s, qy + 14 * s, w / 2 - 36 * s, {size: 27 * s, font: XSERIF, weight: "700", draw: true});
+        });
+        const fs = 25 * s, pad = 12 * s, nw = w * 0.3;
+        M.forEach((n, k) => {
+          if (n.y + 0.05 > G) return;
+          ctx.font = "400 " + fs + "px " + XSANS;
+          const ls = xWrap(ctx, (k + 1) + ". " + n.text, nw - 2 * pad), nh = ls.length * fs * 1.25 + 2 * pad;
+          const nx = x + Math.max(0, Math.min(n.x * w, w - nw - 6)), ny = by + Math.max(0, Math.min(n.y / G * bh, bh - nh - 6));
+          ctx.save(); ctx.shadowColor = "rgba(0,0,0,.28)"; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
+          ctx.fillStyle = XC.stk[(n.author || 0) % 4]; ctx.fillRect(nx, ny, nw, nh); ctx.restore();
+          ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.lineWidth = 2; ctx.strokeRect(nx, ny, nw, nh);
+          ctx.fillStyle = XC.stkInk; ctx.textBaseline = "top"; ctx.font = "400 " + fs + "px " + XSANS;
+          ls.forEach((ln, i) => ctx.fillText(ln, nx + pad, ny + pad + i * fs * 1.25));
+        });
+      }
+      let ly = by + bh + 26 * s;
+      ly = xText(ctx, "Our ideas and where they landed", x, ly, w, {size: 30 * s, font: XSERIF, weight: "700", draw: dd}) + 8 * s;
+      if (!M.length) return xText(ctx, "No ideas have been placed on the matrix yet.", x, ly, w, {size: 26 * s, color: XC.muted, draw: dd});
+      M.forEach((n, k) => { ly = xText(ctx, (k + 1) + ". " + n.text + "  (" + where(n) + ")", x, ly, w, {size: 25 * s, draw: dd}) + 8 * s; });
+      return ly;
+    };
+    const ly = xCard(ctx, XM, top, LW, 26 * s, d, persona) + 24 * s;
+    const lb = xCard(ctx, XM, ly, LW, 26 * s, d, problem);
+    const rb = xCard(ctx, RX, top, RW, 26 * s, d, matrix);
+    return Math.max(lb, rb);
+  };
+  const m = document.createElement("canvas"); m.width = XW; m.height = 10;
+  const mctx = m.getContext("2d"), limit = XH - 85;
+  let s = 0.82;
+  for (const t of [1, 0.94, 0.88, 0.82]){ if (build(mctx, false, t, XH) <= limit){ s = t; break; } }
+  const H = Math.max(XH, Math.ceil(build(mctx, false, s, XH) + 85));
+  const c = document.createElement("canvas"); c.width = XW; c.height = H;
+  const ctx = c.getContext("2d");
+  build(ctx, true, s, H);
+  ctx.fillStyle = XC.muted; ctx.font = "400 26px " + XSANS; ctx.textBaseline = "top";
+  ctx.fillText("Seyfarth in the Future · Legal Design Workshop · Exported " + new Date().toLocaleDateString([], {year: "numeric", month: "long", day: "numeric"}), XM, H - 52);
+  return c;
 }
 const pageOf = c => ({bytes: dataUrlBytes(c.toDataURL("image/jpeg", 0.92)), w: c.width, h: c.height});
 async function exportOne(g, kind){
@@ -2103,12 +2203,13 @@ async function exportOne(g, kind){
   } catch (e){ toast("Couldn’t build the export: " + errText(e)); }
 }
 async function exportAll(){
-  const gs = A.groups.filter(g => g.step > 0 || g.team || g.updatedAt);
+  const sey = A.version === "sey";
+  const gs = A.groups.filter(g => sey ? (g.step > 0 || g.updatedAt) : (g.step > 0 || g.team || g.updatedAt)).sort((a, b) => a.id - b.id);
   if (!gs.length){ toast("No group has started yet, so there’s nothing to export"); return; }
   try {
     const pages = [];
     for (let i = 0; i < gs.length; i++){ toast("Preparing group " + (i + 1) + " of " + gs.length + "…"); pages.push(pageOf(await groupCanvas(gs[i]))); }
-    downloadBlob(makePdf(pages), "Potomac-Day2-results.pdf");
+    downloadBlob(makePdf(pages), sey ? "Seyfarth-report-outs.pdf" : "Potomac-Day2-results.pdf");
     toast("Downloaded results for " + gs.length + " group" + (gs.length === 1 ? "" : "s"));
   } catch (e){ toast("Couldn’t build the export: " + errText(e)); }
 }
@@ -2161,6 +2262,7 @@ function adminListSey(){
     h("div", {}, h("h1", {}, "Facilitator View"), h("div", {class: "sub", id: "adm-sub"}, versionName(A.version) + " · live" + (A.saved ? " · " + A.saved : ""))),
     h("div", {class: "spacer"}),
     h("button", {class: "tbtn", onclick: async () => { seyAddGroups(A.groups.length + 1); renderAdmin(); await saveConfig(); renderAdmin(); }}, "Add group"),
+    h("button", {class: "tbtn", onclick: () => exportAll()}, "Export all (PDF)"),
     h("button", {class: "tbtn", onclick: () => { A.view = "qr"; renderAdmin(); }}, "Worksheet QR"),
     h("button", {class: "tbtn", onclick: () => { A.view = "links"; renderAdmin(); }}, "Links"),
     h("button", {class: "tbtn", onclick: () => adminPoll(true)}, "Refresh"),
@@ -2286,7 +2388,8 @@ function adminPresentSey(){
       names.length ? h("div", {class: "sub"}, "Team: " + names.join(", ")) : null),
     h("button", {class: "tbtn", "aria-label": "Next group", onclick: () => step(1)}, "▶"),
     h("div", {class: "spacer"}),
-    fullBtn());
+    fullBtn(),
+    h("button", {class: "tbtn", onclick: () => exportOne(g, "pdf")}, "Download PDF"));
   const prev = S; S = st;
   let rep;
   try { rep = seyReport(); } finally { S = prev; }
